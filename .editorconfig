@@ -14,7 +14,11 @@ indent_size = 4
 [*.s]
 indent_size = 4
 
-[Makefile]
+[*.mk]
+indent_size = 4
+indent_style = tab
+
+[*.mk]
 indent_size = 4
 indent_style = tab
 
