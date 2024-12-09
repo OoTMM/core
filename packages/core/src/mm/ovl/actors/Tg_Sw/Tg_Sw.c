@@ -1,6 +1,6 @@
 #include "Tg_Sw.h"
 
-// #include "overlays/actors/ovl_En_Sw/z_en_sw.h"
+// #include "oot/overlays/actors/ovl_En_Sw/z_en_sw.h"
 
 #define FLAGS (ACTOR_FLAG_MM_10)
 

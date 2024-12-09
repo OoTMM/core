@@ -4,7 +4,7 @@
 #include "En_Ik.h"
 #include "../src/mm/actors.h"
 
-// #include "overlays/actors/ovl_En_Clear_Tag/z_en_clear_tag.h"
+// #include "oot/overlays/actors/ovl_En_Clear_Tag/z_en_clear_tag.h"
 
 #define FLAGS (ACTOR_FLAG_ATTENTION_ENABLED | ACTOR_FLAG_HOSTILE | ACTOR_FLAG_MM_400)
 

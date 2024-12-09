@@ -304,12 +304,7 @@ MAP      := $(ROM:.z64=.map)
 LDSCRIPT := $(ROM:.z64=.ld)
 # description of ROM segments
 SPEC := spec
-
-ifeq ($(COMPILER),ido)
-SRC_DIRS := $(shell find src -type d -not -path src/gcc_fix)
-else
-SRC_DIRS := $(shell find src -type d)
-endif
+SRC_DIRS := $(shell find src/oot -type d)
 
 ifneq ($(wildcard $(EXTRACTED_DIR)/assets/audio),)
   SAMPLE_EXTRACT_DIRS := $(shell find $(EXTRACTED_DIR)/assets/audio/samples -type d)
@@ -402,7 +397,7 @@ O_FILES       := $(foreach f,$(S_FILES:.s=.o),$(BUILD_DIR)/$f) \
                  $(foreach f,$(ASSET_C_FILES_EXTRACTED:.c=.o),$(f:$(EXTRACTED_DIR)/%=$(BUILD_DIR)/%)) \
                  $(foreach f,$(ASSET_C_FILES_COMMITTED:.c=.o),$(BUILD_DIR)/$f) \
                  $(foreach f,$(BASEROM_BIN_FILES),$(BUILD_DIR)/baserom/$(notdir $f).o) \
-                 $(BUILD_DIR)/src/code/z_message_z_game_over.o
+                 $(BUILD_DIR)/src/oot/code/z_message_z_game_over.o
 
 OVL_RELOC_FILES := $(shell $(CPP) $(CPPFLAGS) $(SPEC) | $(BUILD_DIR_REPLACE) | grep -o '[^"]*_reloc.o' )
 
@@ -443,100 +438,100 @@ $(shell mkdir -p $(foreach dir, \
 endif
 
 ifeq ($(COMPILER),ido)
-$(BUILD_DIR)/src/boot/driverominit.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/boot/driverominit.o: OPTFLAGS := -O2
 
-$(BUILD_DIR)/src/code/jpegutils.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/code/jpegdecoder.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/code/jpegutils.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/code/jpegdecoder.o: OPTFLAGS := -O2
 
-$(BUILD_DIR)/src/code/fault_n64.o: CFLAGS += -trapuv
-$(BUILD_DIR)/src/code/fault_gc.o: CFLAGS += -trapuv
-$(BUILD_DIR)/src/code/fault_gc.o: OPTFLAGS := -O2 -g3
-$(BUILD_DIR)/src/code/fault_gc_drawer.o: CFLAGS += -trapuv
-$(BUILD_DIR)/src/code/fault_gc_drawer.o: OPTFLAGS := -O2 -g3
+$(BUILD_DIR)/src/oot/code/fault_n64.o: CFLAGS += -trapuv
+$(BUILD_DIR)/src/oot/code/fault_gc.o: CFLAGS += -trapuv
+$(BUILD_DIR)/src/oot/code/fault_gc.o: OPTFLAGS := -O2 -g3
+$(BUILD_DIR)/src/oot/code/fault_gc_drawer.o: CFLAGS += -trapuv
+$(BUILD_DIR)/src/oot/code/fault_gc_drawer.o: OPTFLAGS := -O2 -g3
 
-$(BUILD_DIR)/src/code/ucode_disas.o: OPTFLAGS := -O2 -g3
+$(BUILD_DIR)/src/oot/code/ucode_disas.o: OPTFLAGS := -O2 -g3
 
 ifeq ($(PLATFORM),N64)
-$(BUILD_DIR)/src/code/z_rumble.o: CFLAGS += -DNO_SQRTF_INTRINSIC
+$(BUILD_DIR)/src/oot/code/z_rumble.o: CFLAGS += -DNO_SQRTF_INTRINSIC
 endif
 
-$(BUILD_DIR)/src/code/jpegutils.o: CC := $(CC_OLD)
-$(BUILD_DIR)/src/code/jpegdecoder.o: CC := $(CC_OLD)
+$(BUILD_DIR)/src/oot/code/jpegutils.o: CC := $(CC_OLD)
+$(BUILD_DIR)/src/oot/code/jpegdecoder.o: CC := $(CC_OLD)
 
 ifeq ($(DEBUG_FEATURES),1)
-$(BUILD_DIR)/src/libc/%.o: OPTFLAGS := -g
+$(BUILD_DIR)/src/oot/libc/%.o: OPTFLAGS := -g
 else
-$(BUILD_DIR)/src/libc/%.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libc/%.o: OPTFLAGS := -O2
 endif
 
-$(BUILD_DIR)/src/libc64/%.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libc64/%.o: OPTFLAGS := -O2
 
-$(BUILD_DIR)/src/libu64/%.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libu64/%.o: OPTFLAGS := -O2
 
-$(BUILD_DIR)/src/audio/%.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/audio/%.o: OPTFLAGS := -O2
 
 # Use signed chars instead of unsigned for this audio file (needed to match AudioDebug_ScrPrt)
-$(BUILD_DIR)/src/audio/general.o: CFLAGS += -signed
+$(BUILD_DIR)/src/oot/audio/general.o: CFLAGS += -signed
 
 ifeq ($(PLATFORM),N64)
-$(BUILD_DIR)/src/audio/general.o: CFLAGS += -DNO_SQRTF_INTRINSIC
+$(BUILD_DIR)/src/oot/audio/general.o: CFLAGS += -DNO_SQRTF_INTRINSIC
 endif
 
 # Put string literals in .data for some audio files (needed to match these files with literals)
-$(BUILD_DIR)/src/audio/sfx.o: CFLAGS += -use_readwrite_const
-$(BUILD_DIR)/src/audio/sequence.o: CFLAGS += -use_readwrite_const
+$(BUILD_DIR)/src/oot/audio/sfx.o: CFLAGS += -use_readwrite_const
+$(BUILD_DIR)/src/oot/audio/sequence.o: CFLAGS += -use_readwrite_const
 
-$(BUILD_DIR)/src/libultra/%.o: CC := $(CC_OLD)
+$(BUILD_DIR)/src/oot/libultra/%.o: CC := $(CC_OLD)
 
-$(BUILD_DIR)/src/libultra/libc/ll.o: OPTFLAGS := -O1
-$(BUILD_DIR)/src/libultra/libc/ll.o: MIPS_VERSION := -mips3 -32
-$(BUILD_DIR)/src/libultra/libc/llcvt.o: OPTFLAGS := -O1
-$(BUILD_DIR)/src/libultra/libc/llcvt.o: MIPS_VERSION := -mips3 -32
+$(BUILD_DIR)/src/oot/libultra/libc/ll.o: OPTFLAGS := -O1
+$(BUILD_DIR)/src/oot/libultra/libc/ll.o: MIPS_VERSION := -mips3 -32
+$(BUILD_DIR)/src/oot/libultra/libc/llcvt.o: OPTFLAGS := -O1
+$(BUILD_DIR)/src/oot/libultra/libc/llcvt.o: MIPS_VERSION := -mips3 -32
 
 ifeq ($(PLATFORM),N64)
-$(BUILD_DIR)/src/libultra/gu/%.o: OPTFLAGS := -O3
-$(BUILD_DIR)/src/libultra/io/%.o: OPTFLAGS := -O1
-$(BUILD_DIR)/src/libultra/libc/%.o: OPTFLAGS := -O3
-$(BUILD_DIR)/src/libultra/os/%.o: OPTFLAGS := -O1
+$(BUILD_DIR)/src/oot/libultra/gu/%.o: OPTFLAGS := -O3
+$(BUILD_DIR)/src/oot/libultra/io/%.o: OPTFLAGS := -O1
+$(BUILD_DIR)/src/oot/libultra/libc/%.o: OPTFLAGS := -O3
+$(BUILD_DIR)/src/oot/libultra/os/%.o: OPTFLAGS := -O1
 
-$(BUILD_DIR)/src/libultra/io/aisetfreq.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/cartrominit.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/contpfs.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/contramread.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/contramwrite.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/contreaddata.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/crc.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/devmgr.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/epiread.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/epiwrite.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/epirawdma.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/epirawread.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/epirawwrite.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/motor.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/pfsgetstatus.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/pfsselectbank.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/pimgr.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/pirawdma.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/sirawdma.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/sirawread.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/sirawwrite.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/sprawdma.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/vimgr.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/visetspecial.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/viswapcontext.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/aisetfreq.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/cartrominit.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/contpfs.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/contramread.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/contramwrite.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/contreaddata.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/crc.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/devmgr.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/epiread.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/epiwrite.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/epirawdma.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/epirawread.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/epirawwrite.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/motor.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/pfsgetstatus.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/pfsselectbank.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/pimgr.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/pirawdma.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/sirawdma.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/sirawread.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/sirawwrite.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/sprawdma.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/vimgr.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/visetspecial.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/viswapcontext.o: OPTFLAGS := -O2
 
-$(BUILD_DIR)/src/libultra/gu/lookat.o: CFLAGS += -DNO_SQRTF_INTRINSIC
-$(BUILD_DIR)/src/libultra/gu/lookathil.o: CFLAGS += -DNO_SQRTF_INTRINSIC
-$(BUILD_DIR)/src/libultra/gu/normalize.o: CFLAGS += -DNO_SQRTF_INTRINSIC
+$(BUILD_DIR)/src/oot/libultra/gu/lookat.o: CFLAGS += -DNO_SQRTF_INTRINSIC
+$(BUILD_DIR)/src/oot/libultra/gu/lookathil.o: CFLAGS += -DNO_SQRTF_INTRINSIC
+$(BUILD_DIR)/src/oot/libultra/gu/normalize.o: CFLAGS += -DNO_SQRTF_INTRINSIC
 else
-$(BUILD_DIR)/src/libultra/gu/%.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/io/%.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/libc/%.o: OPTFLAGS := -O2
-$(BUILD_DIR)/src/libultra/os/%.o: OPTFLAGS := -O1
+$(BUILD_DIR)/src/oot/libultra/gu/%.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/io/%.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/libc/%.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libultra/os/%.o: OPTFLAGS := -O1
 endif
 
-$(BUILD_DIR)/src/libleo/%.o: CC := $(CC_OLD)
-$(BUILD_DIR)/src/libleo/%.o: OPTFLAGS := -O2
+$(BUILD_DIR)/src/oot/libleo/%.o: CC := $(CC_OLD)
+$(BUILD_DIR)/src/oot/libleo/%.o: OPTFLAGS := -O2
 
 $(BUILD_DIR)/assets/misc/z_select_static/%.o: GBI_DEFINES := -DF3DEX_GBI
 
@@ -545,15 +540,15 @@ $(BUILD_DIR)/assets/misc/z_select_static/%.o: GBI_DEFINES := -DF3DEX_GBI
 
 ifeq ($(PERMUTER),)  # permuter + preprocess.py misbehaves, permuter doesn't care about rodata diffs or bss ordering so just don't use it in that case
 # Handle encoding (UTF-8 -> EUC-JP) and custom pragmas
-$(BUILD_DIR)/src/%.o: CC := ./tools/preprocess.sh -v $(VERSION) -- $(CC)
+$(BUILD_DIR)/src/oot/%.o: CC := ./tools/preprocess.sh -v $(VERSION) -- $(CC)
 endif
 
 else
 # Note that if adding additional assets directories for modding reasons these flags must also be used there
 $(BUILD_DIR)/assets/%.o: CFLAGS += -fno-zero-initialized-in-bss -fno-toplevel-reorder
-$(BUILD_DIR)/src/%.o: CFLAGS += -fexec-charset=euc-jp
-$(BUILD_DIR)/src/libultra/libc/ll.o: OPTFLAGS := -Ofast
-$(BUILD_DIR)/src/overlays/%.o: CFLAGS += -fno-merge-constants -mno-explicit-relocs -mno-split-addresses
+$(BUILD_DIR)/src/oot/%.o: CFLAGS += -fexec-charset=euc-jp
+$(BUILD_DIR)/src/oot/libultra/libc/ll.o: OPTFLAGS := -Ofast
+$(BUILD_DIR)/src/oot/overlays/%.o: CFLAGS += -fno-merge-constants -mno-explicit-relocs -mno-split-addresses
 endif
 
 #### Main Targets ###
@@ -675,7 +670,7 @@ $(BUILD_DIR)/assets/text/nes_message_data_static.o: $(BUILD_DIR)/assets/text/mes
 $(BUILD_DIR)/assets/text/ger_message_data_static.o: $(BUILD_DIR)/assets/text/message_data.enc.nes.h
 $(BUILD_DIR)/assets/text/fra_message_data_static.o: $(BUILD_DIR)/assets/text/message_data.enc.nes.h
 $(BUILD_DIR)/assets/text/staff_message_data_static.o: $(BUILD_DIR)/assets/text/message_data_staff.enc.nes.h
-$(BUILD_DIR)/src/code/z_message.o: assets/text/message_data.h assets/text/message_data_staff.h
+$(BUILD_DIR)/src/oot/code/z_message.o: assets/text/message_data.h assets/text/message_data_staff.h
 
 $(BUILD_DIR)/assets/text/%.o: assets/text/%.c
 ifneq ($(COMPILER),gcc)
@@ -695,48 +690,40 @@ $(BUILD_DIR)/assets/%.o: $(EXTRACTED_DIR)/assets/%.c
 	$(CC) -c $(CFLAGS) $(MIPS_VERSION) $(OPTFLAGS) -o $@ $<
 	$(OBJCOPY) -O binary $@ $@.bin
 
-$(BUILD_DIR)/src/%.o: src/%.s
+$(BUILD_DIR)/src/oot/%.o: src/oot/%.s
 	$(CPP) $(CPPFLAGS) -Iinclude $< | $(AS) $(ASFLAGS) -o $@
 
 # Incremental link to move z_message and z_game_over data into rodata
-$(BUILD_DIR)/src/code/z_message_z_game_over.o: $(BUILD_DIR)/src/code/z_message.o $(BUILD_DIR)/src/code/z_game_over.o
+$(BUILD_DIR)/src/oot/code/z_message_z_game_over.o: $(BUILD_DIR)/src/oot/code/z_message.o $(BUILD_DIR)/src/oot/code/z_game_over.o
 	$(LD) -r -T linker_scripts/data_with_rodata.ld -o $@ $^
 
 $(BUILD_DIR)/dmadata_table_spec.h $(BUILD_DIR)/compress_ranges.txt: $(BUILD_DIR)/$(SPEC)
 	$(MKDMADATA) $< $(BUILD_DIR)/dmadata_table_spec.h $(BUILD_DIR)/compress_ranges.txt
 
 # Dependencies for files that may include the dmadata header automatically generated from the spec file
-$(BUILD_DIR)/src/boot/z_std_dma.o: $(BUILD_DIR)/dmadata_table_spec.h
-$(BUILD_DIR)/src/dmadata/dmadata.o: $(BUILD_DIR)/dmadata_table_spec.h
+$(BUILD_DIR)/src/oot/boot/z_std_dma.o: $(BUILD_DIR)/dmadata_table_spec.h
+$(BUILD_DIR)/src/oot/dmadata/dmadata.o: $(BUILD_DIR)/dmadata_table_spec.h
 
 # Dependencies for files including from include/tables/
 # TODO remove when full header dependencies are used.
-$(BUILD_DIR)/src/code/graph.o: include/tables/gamestate_table.h
-$(BUILD_DIR)/src/code/object_table.o: include/tables/object_table.h
-$(BUILD_DIR)/src/code/z_actor.o: include/tables/actor_table.h # so uses of ACTOR_ID_MAX update when the table length changes
-$(BUILD_DIR)/src/code/z_actor_dlftbls.o: include/tables/actor_table.h
-$(BUILD_DIR)/src/code/z_effect_soft_sprite_dlftbls.o: include/tables/effect_ss_table.h
-$(BUILD_DIR)/src/code/z_game_dlftbls.o: include/tables/gamestate_table.h
-$(BUILD_DIR)/src/code/z_scene_table.o: include/tables/scene_table.h include/tables/entrance_table.h
-$(BUILD_DIR)/src/audio/general.o: $(SEQUENCE_TABLE) include/tables/sfx/*.h
-$(BUILD_DIR)/src/audio/sfx_params.o: include/tables/sfx/*.h
+$(BUILD_DIR)/src/oot/code/graph.o: include/tables/gamestate_table.h
+$(BUILD_DIR)/src/oot/code/object_table.o: include/tables/object_table.h
+$(BUILD_DIR)/src/oot/code/z_actor.o: include/tables/actor_table.h # so uses of ACTOR_ID_MAX update when the table length changes
+$(BUILD_DIR)/src/oot/code/z_actor_dlftbls.o: include/tables/actor_table.h
+$(BUILD_DIR)/src/oot/code/z_effect_soft_sprite_dlftbls.o: include/tables/effect_ss_table.h
+$(BUILD_DIR)/src/oot/code/z_game_dlftbls.o: include/tables/gamestate_table.h
+$(BUILD_DIR)/src/oot/code/z_scene_table.o: include/tables/scene_table.h include/tables/entrance_table.h
+$(BUILD_DIR)/src/oot/audio/general.o: $(SEQUENCE_TABLE) include/tables/sfx/*.h
+$(BUILD_DIR)/src/oot/audio/sfx_params.o: include/tables/sfx/*.h
 
-$(BUILD_DIR)/src/%.o: src/%.c
+$(BUILD_DIR)/src/oot/%.o: src/oot/%.c
 ifneq ($(RUN_CC_CHECK),0)
 	$(CC_CHECK) $<
 endif
 	$(CC) -c $(CFLAGS) $(MIPS_VERSION) $(OPTFLAGS) -o $@ $<
 	@$(OBJDUMP) $(OBJDUMP_FLAGS) $@ > $(@:.o=.s)
 
-$(BUILD_DIR)/src/libultra/libc/ll.o: src/libultra/libc/ll.c
-ifneq ($(RUN_CC_CHECK),0)
-	$(CC_CHECK) $<
-endif
-	$(CC) -c $(CFLAGS) $(MIPS_VERSION) $(OPTFLAGS) -o $@ $<
-	$(PYTHON) tools/set_o32abi_bit.py $@
-	@$(OBJDUMP) $(OBJDUMP_FLAGS) $@ > $(@:.o=.s)
-
-$(BUILD_DIR)/src/libultra/libc/llcvt.o: src/libultra/libc/llcvt.c
+$(BUILD_DIR)/src/oot/libultra/libc/ll.o: src/oot/libultra/libc/ll.c
 ifneq ($(RUN_CC_CHECK),0)
 	$(CC_CHECK) $<
 endif
@@ -744,7 +731,15 @@ endif
 	$(PYTHON) tools/set_o32abi_bit.py $@
 	@$(OBJDUMP) $(OBJDUMP_FLAGS) $@ > $(@:.o=.s)
 
-$(BUILD_DIR)/src/overlays/%_reloc.o: $(BUILD_DIR)/$(SPEC)
+$(BUILD_DIR)/src/oot/libultra/libc/llcvt.o: src/oot/libultra/libc/llcvt.c
+ifneq ($(RUN_CC_CHECK),0)
+	$(CC_CHECK) $<
+endif
+	$(CC) -c $(CFLAGS) $(MIPS_VERSION) $(OPTFLAGS) -o $@ $<
+	$(PYTHON) tools/set_o32abi_bit.py $@
+	@$(OBJDUMP) $(OBJDUMP_FLAGS) $@ > $(@:.o=.s)
+
+$(BUILD_DIR)/src/oot/overlays/%_reloc.o: $(BUILD_DIR)/$(SPEC)
 	$(FADO) $$(tools/reloc_prereq $< $(notdir $*)) -n $(notdir $*) -o $(@:.o=.s) -M $(@:.o=.d)
 	$(AS) $(ASFLAGS) $(@:.o=.s) -o $@
 
@@ -887,13 +882,13 @@ $(BUILD_DIR)/assets/audio/sequence_font_table.s: $(BUILD_DIR)/assets/audio/seque
 
 # build the tables into objects, move data -> rodata
 
-$(BUILD_DIR)/src/audio/tables/samplebank_table.o: src/audio/tables/samplebank_table.c $(BUILD_DIR)/assets/audio/samplebank_table.h
-$(BUILD_DIR)/src/audio/tables/soundfont_table.o: src/audio/tables/soundfont_table.c $(BUILD_DIR)/assets/audio/soundfont_table.h $(SOUNDFONT_HEADERS)
-$(BUILD_DIR)/src/audio/tables/sequence_table.o: src/audio/tables/sequence_table.c $(SEQUENCE_TABLE)
+$(BUILD_DIR)/src/oot/audio/tables/samplebank_table.o: src/oot/audio/tables/samplebank_table.c $(BUILD_DIR)/assets/audio/samplebank_table.h
+$(BUILD_DIR)/src/oot/audio/tables/soundfont_table.o: src/oot/audio/tables/soundfont_table.c $(BUILD_DIR)/assets/audio/soundfont_table.h $(SOUNDFONT_HEADERS)
+$(BUILD_DIR)/src/oot/audio/tables/sequence_table.o: src/oot/audio/tables/sequence_table.c $(SEQUENCE_TABLE)
 
-$(BUILD_DIR)/src/audio/tables/sequence_table.o: CFLAGS += -I include/tables
+$(BUILD_DIR)/src/oot/audio/tables/sequence_table.o: CFLAGS += -I include/tables
 
-$(BUILD_DIR)/src/audio/tables/%.o: src/audio/tables/%.c
+$(BUILD_DIR)/src/oot/audio/tables/%.o: src/oot/audio/tables/%.c
 ifneq ($(RUN_CC_CHECK),0)
 	$(CC_CHECK) $<
 endif

@@ -6,7 +6,7 @@
 
 #include "En_Bombf.h"
 #include "assets/oot/objects/object_bombf.h"
-// #include "overlays/effects/ovl_Effect_Ss_Dead_Sound/z_eff_ss_dead_sound.h"
+// #include "oot/overlays/effects/ovl_Effect_Ss_Dead_Sound/z_eff_ss_dead_sound.h"
 
 #define FLAGS (ACTOR_FLAG_ATTENTION_ENABLED | ACTOR_FLAG_OOT_4)
 
