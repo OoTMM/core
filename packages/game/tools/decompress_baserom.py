@@ -148,7 +148,7 @@ ROM_FILE_EXTENSIONS = ["z64", "n64", "v64"]
 def find_baserom(version: str) -> Path | None:
     for rom_file_ext_lower in ROM_FILE_EXTENSIONS:
         for rom_file_ext in (rom_file_ext_lower, rom_file_ext_lower.upper()):
-            rom_file_name_candidate = Path(f"baseroms/{version}/baserom.{rom_file_ext}")
+            rom_file_name_candidate = Path(f"../../roms/oot.{rom_file_ext}")
             if rom_file_name_candidate.exists():
                 return rom_file_name_candidate
     return None
@@ -195,7 +195,7 @@ def main():
 
     if rom_file_name is None:
         path_list = [
-            f"baseroms/{version}/baserom.{rom_file_ext}"
+            f"../../roms/oot.{rom_file_ext}"
             for rom_file_ext in ROM_FILE_EXTENSIONS
         ]
         print(f"Error: Could not find {','.join(path_list)}.")

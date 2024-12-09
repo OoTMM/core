@@ -14,13 +14,13 @@ SHELL = /bin/bash
 -include .make_options.mk
 
 # If COMPARE is 1, check the output md5sum after building. Set to 0 when modding.
-COMPARE ?= 1
+COMPARE := 0
 # If NON_MATCHING is 1, define the NON_MATCHING C flag when building. Set to 1 when modding.
-NON_MATCHING ?= 0
+NON_MATCHING := 1
 # If ORIG_COMPILER is 1, compile with QEMU_IRIX and the original compiler.
-ORIG_COMPILER ?= 0
+ORIG_COMPILER := 0
 # If COMPILER is "gcc", compile with GCC instead of IDO.
-COMPILER ?= ido
+COMPILER := gcc
 # Target game version. Ensure the corresponding input ROM is placed in baseroms/$(VERSION)/baserom.z64.
 # Currently the following versions are supported:
 #   ntsc-1.0       N64 NTSC 1.0 (Japan/US depending on REGION)
@@ -36,7 +36,7 @@ COMPILER ?= ido
 #   gc-eu          GameCube Europe/PAL
 #   gc-eu-mq       GameCube Europe/PAL Master Quest
 #   gc-jp-ce       GameCube Japan (Collector's Edition disc)
-VERSION ?= gc-eu-mq-dbg
+VERSION := ntsc-1.0
 # Number of threads to extract and compress with.
 N_THREADS ?= $(shell nproc)
 # Check code syntax with host compiler.
