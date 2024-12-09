@@ -4,7 +4,7 @@ LOADER_OBJ_DIR		:= $(LOADER_BUILD_DIR)/obj
 LOADER_SRC_DIR		:= $(CURDIR)/loader/src
 
 # Sources and objects
-LOADER_SOURCES			:= $(wildcard $(LOADER_SRC_DIR)/*.c)
+LOADER_SOURCES			:= $(shell find $(LOADER_SRC_DIR) -name '*.c' -type f)
 LOADER_OBJECTS			:= $(patsubst $(LOADER_SRC_DIR)/%.c,$(LOADER_OBJ_DIR)/%.o,$(LOADER_SOURCES))
 LOADER_LINK_SCRIPT		:= $(CURDIR)/loader/link.ld
 
