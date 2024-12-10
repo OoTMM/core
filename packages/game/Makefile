@@ -86,7 +86,7 @@ PROJECT_DIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 BUILD_DIR := build
 OOT_BUILD_DIR := $(BUILD_DIR)/oot
 OOT_EXPECTED_DIR := expected/$(BUILD_DIR)
-OOT_BASEROM_DIR := baseroms/$(OOT_VERSION)
+OOT_BASEROM_DIR := libs/oot/baseroms/$(OOT_VERSION)
 OOT_EXTRACTED_DIR := extracted/oot
 VENV := .venv
 

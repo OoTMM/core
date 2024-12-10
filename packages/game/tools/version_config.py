@@ -59,7 +59,7 @@ class AssetConfig:
 
 def load_dmadata_segments(version: str) -> OrderedDict[str, SegmentInfo]:
     segments = OrderedDict()
-    with open(PROJECT_ROOT / f"baseroms/{version}/segments.csv", "r") as f:
+    with open(PROJECT_ROOT / f"libs/oot/baseroms/{version}/segments.csv", "r") as f:
         reader = csv.DictReader(f)
         for row in reader:
             name = row["Name"]
@@ -69,7 +69,7 @@ def load_dmadata_segments(version: str) -> OrderedDict[str, SegmentInfo]:
 
 
 def load_version_config(version: str) -> VersionConfig:
-    with open(PROJECT_ROOT / f"baseroms/{version}/config.yml", "r") as f:
+    with open(PROJECT_ROOT / f"libs/oot/baseroms/{version}/config.yml", "r") as f:
         config = yaml.load(f, Loader=yaml.Loader)
 
     incbins = []

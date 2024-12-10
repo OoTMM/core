@@ -167,7 +167,7 @@ def main():
 
     version = args.version
 
-    baserom_dir = Path(f"baseroms/{version}")
+    baserom_dir = Path(f"libs/oot/baseroms/{version}")
     if not baserom_dir.exists():
         print(f"Error: Unknown version '{version}'.")
         exit(1)
