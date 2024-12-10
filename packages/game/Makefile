@@ -242,19 +242,6 @@ OBJDUMP_FLAGS := -d -r -z -Mreg-names=32
 ### Game libs ###
 include libs/oot/build.mk
 
-#### Files ####
-
-# ROM image
-OOT_ROM		:= $(BUILD_DIR)/oot.z64
-OOT_ROMC	:= $(OOT_ROM:.z64=-compressed.z64)
-OOT_ELF     := $(OOT_ROM:.z64=.elf)
-MAP      	:= $(OOT_ROM:.z64=.map)
-LDSCRIPT 	:= $(OOT_ROM:.z64=.ld)
-
-# description of ROM segments
-OOT_SPEC := libs/oot/spec
-SRC_DIRS := $(shell find libs/oot/src -type d)
-
 ifneq ($(wildcard $(OOT_EXTRACTED_DIR)/assets/audio),)
   SAMPLE_EXTRACT_DIRS := $(shell find $(OOT_EXTRACTED_DIR)/assets/audio/samples -type d)
   SAMPLEBANK_EXTRACT_DIRS := $(shell find $(OOT_EXTRACTED_DIR)/assets/audio/samplebanks -type d)
@@ -339,8 +326,8 @@ BASEROM_BIN_FILES := $(wildcard $(OOT_EXTRACTED_DIR)/baserom/*)
 # source files
 ASSET_C_FILES_EXTRACTED := $(filter-out %.inc.c,$(foreach dir,$(ASSET_BIN_DIRS_EXTRACTED),$(wildcard $(dir)/*.c)))
 ASSET_C_FILES_COMMITTED := $(filter-out %.inc.c,$(foreach dir,$(ASSET_BIN_DIRS_COMMITTED),$(wildcard $(dir)/*.c)))
-SRC_C_FILES   := $(filter-out %.inc.c,$(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.c)))
-S_FILES       := $(foreach dir,$(SRC_DIRS) $(UNDECOMPILED_DATA_DIRS),$(wildcard $(dir)/*.s))
+SRC_C_FILES   := $(filter-out %.inc.c,$(foreach dir,$(OOT_SRC_DIRS),$(wildcard $(dir)/*.c)))
+S_FILES       := $(foreach dir,$(OOT_SRC_DIRS) $(UNDECOMPILED_DATA_DIRS),$(wildcard $(dir)/*.s))
 O_FILES       := $(foreach f,$(S_FILES:.s=.o),$(BUILD_DIR)/$f) \
                  $(foreach f,$(SRC_C_FILES:.c=.o),$(BUILD_DIR)/$f) \
                  $(foreach f,$(ASSET_C_FILES_EXTRACTED:.c=.o),$(f:$(OOT_EXTRACTED_DIR)/%=$(BUILD_DIR)/%)) \
@@ -368,7 +355,7 @@ TEXTURE_FILES_OUT := $(foreach f,$(TEXTURE_FILES_PNG_EXTRACTED:.png=.inc.c),$(f:
 $(shell mkdir -p $(BUILD_DIR)/baserom \
                  $(BUILD_DIR)/assets/text)
 $(shell mkdir -p $(foreach dir, \
-                      $(SRC_DIRS) \
+                      $(OOT_SRC_DIRS) \
                       $(UNDECOMPILED_DATA_DIRS) \
                       $(SAMPLE_DIRS) \
                       $(SAMPLEBANK_DIRS) \
@@ -572,10 +559,10 @@ $(OOT_ROMC): $(OOT_ROM) $(OOT_ELF) $(BUILD_DIR)/compress_ranges.txt
 	$(PYTHON) tools/compress.py --in $(OOT_ROM) --out $@ --dmadata-start `./tools/dmadata_start.sh $(NM) $(OOT_ELF)` --compress `cat $(BUILD_DIR)/compress_ranges.txt` --threads $(N_THREADS)
 	$(PYTHON) -m ipl3checksum sum --cic 6105 --update $@
 
-$(OOT_ELF): $(TEXTURE_FILES_OUT) $(ASSET_FILES_OUT) $(O_FILES) $(OVL_RELOC_FILES) $(LDSCRIPT) $(BUILD_DIR)/undefined_syms.txt \
+$(OOT_ELF): $(TEXTURE_FILES_OUT) $(ASSET_FILES_OUT) $(O_FILES) $(OVL_RELOC_FILES) $(OOT_LDSCRIPT) $(BUILD_DIR)/undefined_syms.txt \
         $(SAMPLEBANK_O_FILES) $(SOUNDFONT_O_FILES) $(SEQUENCE_O_FILES) \
         $(BUILD_DIR)/assets/audio/sequence_font_table.o $(BUILD_DIR)/assets/audio/audiobank_padding.o
-	$(LD) -T $(LDSCRIPT) -T $(BUILD_DIR)/undefined_syms.txt --no-check-sections --accept-unknown-input-arch --emit-relocs -Map $(MAP) -o $@
+	$(LD) -T $(OOT_LDSCRIPT) -T $(BUILD_DIR)/undefined_syms.txt --no-check-sections --accept-unknown-input-arch --emit-relocs -Map $(OOT_MAP) -o $@
 
 ## Order-only prerequisites
 # These ensure e.g. the O_FILES are built before the OVL_RELOC_FILES.
@@ -592,7 +579,7 @@ $(O_FILES): | asset_files
 $(BUILD_DIR)/$(OOT_SPEC): $(OOT_SPEC)
 	$(CPP) $(CPPFLAGS) $< | $(BUILD_DIR_REPLACE) > $@
 
-$(LDSCRIPT): $(BUILD_DIR)/$(OOT_SPEC)
+$(OOT_LDSCRIPT): $(BUILD_DIR)/$(OOT_SPEC)
 	$(MKLDSCRIPT) $< $@
 
 $(BUILD_DIR)/undefined_syms.txt: undefined_syms.txt
