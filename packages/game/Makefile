@@ -242,54 +242,6 @@ OBJDUMP_FLAGS := -d -r -z -Mreg-names=32
 ### Game libs ###
 include libs/oot/build.mk
 
-ifneq ($(wildcard libs/oot/assets/audio/samples),)
-  OOT_SAMPLE_DIRS := $(shell find libs/oot/assets/audio/samples -type d)
-else
-  OOT_SAMPLE_DIRS :=
-endif
-
-ifneq ($(wildcard libs/oot/assets/audio/samplebanks),)
-  OOT_SAMPLEBANK_DIRS := $(shell find libs/oot/assets/audio/samplebanks -type d)
-else
-  OOT_SAMPLEBANK_DIRS :=
-endif
-
-ifneq ($(wildcard libs/oot/assets/audio/soundfonts),)
-  OOT_SOUNDFONT_DIRS := $(shell find libs/oot/assets/audio/soundfonts -type d)
-else
-  OOT_SOUNDFONT_DIRS :=
-endif
-
-ifneq ($(wildcard libs/oot/assets/audio/sequences),)
-  OOT_SEQUENCE_DIRS := $(shell find libs/oot/assets/audio/sequences -type d)
-else
-  OOT_SEQUENCE_DIRS :=
-endif
-
-SAMPLE_FILES         := $(foreach dir,$(OOT_SAMPLE_DIRS),$(wildcard $(dir)/*.wav))
-SAMPLE_EXTRACT_FILES := $(foreach dir,$(OOT_SAMPLE_EXTRACT_DIRS),$(wildcard $(dir)/*.wav))
-AIFC_FILES           := $(foreach f,$(SAMPLE_FILES),$(BUILD_DIR)/$(f:.wav=.aifc)) $(foreach f,$(SAMPLE_EXTRACT_FILES:.wav=.aifc),$(f:$(OOT_EXTRACTED_DIR)/%=$(BUILD_DIR)/%))
-
-SAMPLEBANK_XMLS         := $(foreach dir,$(OOT_SAMPLEBANK_DIRS),$(wildcard $(dir)/*.xml))
-SAMPLEBANK_EXTRACT_XMLS := $(foreach dir,$(OOT_SAMPLEBANK_EXTRACT_DIRS),$(wildcard $(dir)/*.xml))
-SAMPLEBANK_BUILD_XMLS   := $(foreach f,$(SAMPLEBANK_XMLS),$(BUILD_DIR)/$f) $(foreach f,$(SAMPLEBANK_EXTRACT_XMLS),$(f:$(OOT_EXTRACTED_DIR)/%=$(BUILD_DIR)/%))
-SAMPLEBANK_O_FILES      := $(foreach f,$(SAMPLEBANK_BUILD_XMLS),$(f:.xml=.o))
-SAMPLEBANK_DEP_FILES    := $(foreach f,$(SAMPLEBANK_O_FILES),$(f:.o=.d))
-
-SOUNDFONT_XMLS         := $(foreach dir,$(OOT_SOUNDFONT_DIRS),$(wildcard $(dir)/*.xml))
-SOUNDFONT_EXTRACT_XMLS := $(foreach dir,$(OOT_SOUNDFONT_EXTRACT_DIRS),$(wildcard $(dir)/*.xml))
-SOUNDFONT_BUILD_XMLS   := $(foreach f,$(SOUNDFONT_XMLS),$(BUILD_DIR)/$f) $(foreach f,$(SOUNDFONT_EXTRACT_XMLS),$(f:$(OOT_EXTRACTED_DIR)/%=$(BUILD_DIR)/%))
-SOUNDFONT_O_FILES      := $(foreach f,$(SOUNDFONT_BUILD_XMLS),$(f:.xml=.o))
-SOUNDFONT_HEADERS      := $(foreach f,$(SOUNDFONT_BUILD_XMLS),$(f:.xml=.h))
-SOUNDFONT_DEP_FILES    := $(foreach f,$(SOUNDFONT_O_FILES),$(f:.o=.d))
-
-SEQUENCE_FILES         := $(foreach dir,$(OOT_SEQUENCE_DIRS),$(wildcard $(dir)/*.seq))
-SEQUENCE_EXTRACT_FILES := $(foreach dir,$(OOT_SEQUENCE_EXTRACT_DIRS),$(wildcard $(dir)/*.seq))
-SEQUENCE_O_FILES       := $(foreach f,$(SEQUENCE_FILES),$(BUILD_DIR)/$(f:libs/%.seq=%.o)) $(foreach f,$(SEQUENCE_EXTRACT_FILES:.seq=.o),$(f:$(OOT_EXTRACTED_DIR)/%=$(BUILD_DIR)/%))
-SEQUENCE_DEP_FILES     := $(foreach f,$(SEQUENCE_O_FILES),$(f:.o=.d))
-
-SEQUENCE_TABLE := include/tables/sequence_table.h
-
 # create extracted directory
 $(shell mkdir -p $(OOT_EXTRACTED_DIR))
 
@@ -548,7 +500,7 @@ $(OOT_ROMC): $(OOT_ROM) $(OOT_ELF) $(BUILD_DIR)/compress_ranges.txt
 	$(PYTHON) -m ipl3checksum sum --cic 6105 --update $@
 
 $(OOT_ELF): $(TEXTURE_FILES_OUT) $(ASSET_FILES_OUT) $(O_FILES) $(OVL_RELOC_FILES) $(OOT_LDSCRIPT) $(BUILD_DIR)/undefined_syms.txt \
-        $(SAMPLEBANK_O_FILES) $(SOUNDFONT_O_FILES) $(SEQUENCE_O_FILES) \
+        $(OOT_SAMPLEBANK_O_FILES) $(OOT_SOUNDFONT_O_FILES) $(OOT_SEQUENCE_O_FILES) \
         $(BUILD_DIR)/assets/audio/sequence_font_table.o $(BUILD_DIR)/assets/audio/audiobank_padding.o
 	$(LD) -T $(OOT_LDSCRIPT) -T $(BUILD_DIR)/undefined_syms.txt --no-check-sections --accept-unknown-input-arch --emit-relocs -Map $(OOT_MAP) -o $@
 
@@ -646,7 +598,7 @@ $(BUILD_DIR)/oot/src/code/z_actor_dlftbls.o: include/tables/actor_table.h
 $(BUILD_DIR)/oot/src/code/z_effect_soft_sprite_dlftbls.o: include/tables/effect_ss_table.h
 $(BUILD_DIR)/oot/src/code/z_game_dlftbls.o: include/tables/gamestate_table.h
 $(BUILD_DIR)/oot/src/code/z_scene_table.o: include/tables/scene_table.h include/tables/entrance_table.h
-$(BUILD_DIR)/oot/src/audio/general.o: $(SEQUENCE_TABLE) include/tables/sfx/*.h
+$(BUILD_DIR)/oot/src/audio/general.o: $(OOT_SEQUENCE_TABLE) include/tables/sfx/*.h
 $(BUILD_DIR)/oot/src/audio/sfx_params.o: include/tables/sfx/*.h
 
 $(BUILD_DIR)/oot/src/%.o: libs/oot/src/%.c
@@ -703,7 +655,7 @@ $(BUILD_DIR)/assets/%.jpg.inc.c: $(OOT_EXTRACTED_DIR)/assets/%.jpg
 AUDIO_BUILD_DEBUG ?= 0
 ifeq ($(AUDIO_BUILD_DEBUG),1)
   # for debugging only, make soundfonts depend on samplebanks so they can be linked against
-  $(BUILD_DIR)/assets/audio/soundfonts/%.o: $(SAMPLEBANK_O_FILES)
+  $(BUILD_DIR)/assets/audio/soundfonts/%.o: $(OOT_SAMPLEBANK_O_FILES)
 endif
 
 # first build samples...
@@ -746,11 +698,11 @@ $(BUILD_DIR)/assets/audio/samplebanks/%.xml: $(OOT_EXTRACTED_DIR)/assets/audio/s
 	cat $< | $(BUILD_DIR_REPLACE) > $@
 
 .PRECIOUS: $(BUILD_DIR)/assets/audio/samplebanks/%.s
-$(BUILD_DIR)/assets/audio/samplebanks/%.s: $(BUILD_DIR)/assets/audio/samplebanks/%.xml | $(AIFC_FILES)
+$(BUILD_DIR)/assets/audio/samplebanks/%.s: $(BUILD_DIR)/assets/audio/samplebanks/%.xml | $(OOT_AIFC_FILES)
 	@mkdir -p $(@D)
 	$(SBC) $(SBCFLAGS) --makedepend $(@:.s=.d) $< $@
 
--include $(SAMPLEBANK_DEP_FILES)
+-include $(OOT_SAMPLEBANK_DEP_FILES)
 
 $(BUILD_DIR)/assets/audio/samplebanks/%.o: $(BUILD_DIR)/assets/audio/samplebanks/%.s
 	@mkdir -p $(@D)
@@ -771,13 +723,13 @@ $(BUILD_DIR)/assets/audio/soundfonts/%.xml: $(OOT_EXTRACTED_DIR)/assets/audio/so
 	cat $< | $(BUILD_DIR_REPLACE) > $@
 
 .PRECIOUS: $(BUILD_DIR)/assets/audio/soundfonts/%.c $(BUILD_DIR)/assets/audio/soundfonts/%.h $(BUILD_DIR)/assets/audio/soundfonts/%.name
-$(BUILD_DIR)/assets/audio/soundfonts/%.c $(BUILD_DIR)/assets/audio/soundfonts/%.h $(BUILD_DIR)/assets/audio/soundfonts/%.name: $(BUILD_DIR)/assets/audio/soundfonts/%.xml | $(SAMPLEBANK_BUILD_XMLS) $(AIFC_FILES)
+$(BUILD_DIR)/assets/audio/soundfonts/%.c $(BUILD_DIR)/assets/audio/soundfonts/%.h $(BUILD_DIR)/assets/audio/soundfonts/%.name: $(BUILD_DIR)/assets/audio/soundfonts/%.xml | $(OOT_SAMPLEBANK_BUILD_XMLS) $(OOT_AIFC_FILES)
 # This rule can be triggered for either the .c or .h file, so $@ may refer to either the .c or .h file. A simple
 # substitution $(@:.c=.h) will fail ~50% of the time with -j. Instead, don't assume anything about the suffix of $@.
 	@mkdir -p $(@D)
 	$(SFC) $(SFCFLAGS) --makedepend $(basename $@).d $< $(basename $@).c $(basename $@).h $(basename $@).name
 
--include $(SOUNDFONT_DEP_FILES)
+-include $(OOT_SOUNDFONT_DEP_FILES)
 
 $(BUILD_DIR)/assets/audio/soundfonts/%.o: $(BUILD_DIR)/assets/audio/soundfonts/%.c $(BUILD_DIR)/assets/audio/soundfonts/%.name
 	@mkdir -p $(@D)
@@ -792,19 +744,19 @@ $(BUILD_DIR)/assets/audio/soundfonts/%.o: $(BUILD_DIR)/assets/audio/soundfonts/%
 # cleanup temp files
 	@$(RM) $(@:.o=.tmp) $(@:.o=.tmp2)
 ifeq ($(AUDIO_BUILD_DEBUG),1)
-	$(LD) $(foreach f,$(SAMPLEBANK_O_FILES),-R $f) -T linker_scripts/soundfont.ld $@ -o $(@:.o=.elf)
+	$(LD) $(foreach f,$(OOT_SAMPLEBANK_O_FILES),-R $f) -T linker_scripts/soundfont.ld $@ -o $(@:.o=.elf)
 	$(OBJCOPY) -O binary -j.rodata $(@:.o=.elf) $(@:.o=.bin)
 	@(cmp $(@:.o=.bin) $(patsubst $(BUILD_DIR)/assets/audio/soundfonts/%,$(OOT_EXTRACTED_DIR)/baserom_audiotest/audiobank_files/%,$(@:.o=.bin)) && echo "$(<F) OK" || (mkdir -p NONMATCHINGS/soundfonts && cp $(@:.o=.bin) NONMATCHINGS/soundfonts/$(@F:.o=.bin)))
 endif
 
 # then assemble the sequences...
 
-$(BUILD_DIR)/oot/assets/audio/sequences/%.o: libs/oot/assets/audio/sequences/%.seq include/audio/aseq.h $(SEQUENCE_TABLE) | $(SOUNDFONT_HEADERS)
+$(BUILD_DIR)/oot/assets/audio/sequences/%.o: libs/oot/assets/audio/sequences/%.seq include/audio/aseq.h $(OOT_SEQUENCE_TABLE) | $(OOT_SOUNDFONT_HEADERS)
 	@mkdir -p $(@D)
 	$(SEQ_CPP) $(SEQ_CPPFLAGS) $< -o $(@:.o=.s) -MMD -MT $@
 	$(AS) $(ASFLAGS) -I $(BUILD_DIR)/assets/audio/soundfonts -I include/audio -I $(dir $<) $(@:.o=.s) -o $@
 
-$(BUILD_DIR)/assets/audio/sequences/%.o: $(OOT_EXTRACTED_DIR)/assets/audio/sequences/%.seq include/audio/aseq.h $(SEQUENCE_TABLE) | $(SOUNDFONT_HEADERS)
+$(BUILD_DIR)/assets/audio/sequences/%.o: $(OOT_EXTRACTED_DIR)/assets/audio/sequences/%.seq include/audio/aseq.h $(OOT_SEQUENCE_TABLE) | $(OOT_SOUNDFONT_HEADERS)
 	@mkdir -p $(@D)
 	$(SEQ_CPP) $(SEQ_CPPFLAGS) $< -o $(@:.o=.s) -MMD -MT $@
 	$(AS) $(ASFLAGS) -I $(BUILD_DIR)/assets/audio/soundfonts -I include/audio -I $(dir $<) $(@:.o=.s) -o $@
@@ -813,33 +765,33 @@ ifeq ($(AUDIO_BUILD_DEBUG),1)
 	@(cmp $(@:.o=.aseq) $(patsubst $(BUILD_DIR)/assets/audio/sequences/%,$(OOT_EXTRACTED_DIR)/baserom_audiotest/audioseq_files/%,$(@:.o=.aseq)) && echo "$(<F) OK" || (mkdir -p NONMATCHINGS/sequences && cp $(@:.o=.aseq) NONMATCHINGS/sequences/$(@F:.o=.aseq)))
 endif
 
--include $(SEQUENCE_DEP_FILES)
+-include $(OOT_SEQUENCE_DEP_FILES)
 
 # put together the tables
 
-$(BUILD_DIR)/assets/audio/samplebank_table.h: $(SAMPLEBANK_BUILD_XMLS)
+$(BUILD_DIR)/assets/audio/samplebank_table.h: $(OOT_SAMPLEBANK_BUILD_XMLS)
 	@mkdir -p $(@D)
 	$(ATBLGEN) --banks $@ $^
 
-$(BUILD_DIR)/assets/audio/soundfont_table.h: $(SOUNDFONT_BUILD_XMLS) $(SAMPLEBANK_BUILD_XMLS)
+$(BUILD_DIR)/assets/audio/soundfont_table.h: $(OOT_SOUNDFONT_BUILD_XMLS) $(OOT_SAMPLEBANK_BUILD_XMLS)
 	@mkdir -p $(@D)
-	$(ATBLGEN) --fonts $@ $(SOUNDFONT_BUILD_XMLS)
+	$(ATBLGEN) --fonts $@ $(OOT_SOUNDFONT_BUILD_XMLS)
 
 SEQ_ORDER_DEFS := -DDEFINE_SEQUENCE_PTR\(name,seqId,_2,_3,_4\)=*\(name,seqId\) \
                   -DDEFINE_SEQUENCE\(name,seqId,_2,_3,_4\)=\(name,seqId\)
-$(BUILD_DIR)/assets/audio/sequence_order.in: $(SEQUENCE_TABLE)
+$(BUILD_DIR)/assets/audio/sequence_order.in: $(OOT_SEQUENCE_TABLE)
 	@mkdir -p $(@D)
 	$(CPP) $(CPPFLAGS) $< $(SEQ_ORDER_DEFS) -o $@
 
-$(BUILD_DIR)/assets/audio/sequence_font_table.s: $(BUILD_DIR)/assets/audio/sequence_order.in $(SEQUENCE_O_FILES)
+$(BUILD_DIR)/assets/audio/sequence_font_table.s: $(BUILD_DIR)/assets/audio/sequence_order.in $(OOT_SEQUENCE_O_FILES)
 	@mkdir -p $(@D)
 	$(ATBLGEN) --sequences $@ $^
 
 # build the tables into objects, move data -> rodata
 
 $(BUILD_DIR)/oot/src/audio/tables/samplebank_table.o: libs/oot/src/audio/tables/samplebank_table.c $(BUILD_DIR)/assets/audio/samplebank_table.h
-$(BUILD_DIR)/oot/src/audio/tables/soundfont_table.o: libs/oot/src/audio/tables/soundfont_table.c $(BUILD_DIR)/assets/audio/soundfont_table.h $(SOUNDFONT_HEADERS)
-$(BUILD_DIR)/oot/src/audio/tables/sequence_table.o: libs/oot/src/audio/tables/sequence_table.c $(SEQUENCE_TABLE)
+$(BUILD_DIR)/oot/src/audio/tables/soundfont_table.o: libs/oot/src/audio/tables/soundfont_table.c $(BUILD_DIR)/assets/audio/soundfont_table.h $(OOT_SOUNDFONT_HEADERS)
+$(BUILD_DIR)/oot/src/audio/tables/sequence_table.o: libs/oot/src/audio/tables/sequence_table.c $(OOT_SEQUENCE_TABLE)
 
 $(BUILD_DIR)/oot/src/audio/tables/sequence_table.o: CFLAGS += -I include/tables
 
