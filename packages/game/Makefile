@@ -239,16 +239,20 @@ endif
 
 OBJDUMP_FLAGS := -d -r -z -Mreg-names=32
 
+### Game libs ###
+include libs/oot/build.mk
+
 #### Files ####
 
 # ROM image
-ROM      := $(BUILD_DIR)/oot-$(OOT_VERSION).z64
-ROMC     := $(ROM:.z64=-compressed.z64)
-ELF      := $(ROM:.z64=.elf)
-MAP      := $(ROM:.z64=.map)
-LDSCRIPT := $(ROM:.z64=.ld)
+OOT_ROM		:= $(BUILD_DIR)/oot.z64
+OOT_ROMC	:= $(OOT_ROM:.z64=-compressed.z64)
+OOT_ELF     := $(OOT_ROM:.z64=.elf)
+MAP      	:= $(OOT_ROM:.z64=.map)
+LDSCRIPT 	:= $(OOT_ROM:.z64=.ld)
+
 # description of ROM segments
-OOT_SPEC := spec-oot
+OOT_SPEC := libs/oot/spec
 SRC_DIRS := $(shell find libs/oot/src -type d)
 
 ifneq ($(wildcard $(OOT_EXTRACTED_DIR)/assets/audio),)
@@ -500,9 +504,9 @@ endif
 
 all: rom compress
 
-rom: $(ROM)
+rom: $(OOT_ROM)
 ifneq ($(COMPARE),0)
-	@md5sum $(ROM)
+	@md5sum $(OOT_ROM)
  ifneq ($(REGIONAL_CHECKSUM),0)
 	@md5sum -c $(OOT_BASEROM_DIR)/checksum-$(REGION).md5
  else
@@ -510,9 +514,9 @@ ifneq ($(COMPARE),0)
  endif
 endif
 
-compress: $(ROMC)
+compress: $(OOT_ROMC)
 ifneq ($(COMPARE),0)
-	@md5sum $(ROMC)
+	@md5sum $(OOT_ROMC)
  ifneq ($(REGIONAL_CHECKSUM),0)
 	@md5sum -c $(OOT_BASEROM_DIR)/checksum-$(REGION)-compressed.md5
  else
@@ -549,7 +553,7 @@ disasm:
 	$(RM) -r $(OOT_EXPECTED_DIR)
 	VERSION=$(OOT_VERSION) DISASM_BASEROM=$(OOT_BASEROM_DIR)/baserom-decompressed.z64 DISASM_DIR=$(OOT_EXPECTED_DIR) PYTHON=$(PYTHON) AS_CMD='$(AS) $(ASFLAGS)' LD=$(LD) ./tools/disasm/do_disasm.sh
 
-run: $(ROM)
+run: $(OOT_ROM)
 ifeq ($(N64_EMULATOR),)
 	$(error Emulator path not set. Set N64_EMULATOR in the Makefile or define it as an environment variable)
 endif
@@ -561,14 +565,14 @@ endif
 
 #### Various Recipes ####
 
-$(ROM): $(ELF)
+$(OOT_ROM): $(OOT_ELF)
 	$(ELF2ROM) -cic 6105 $< $@
 
-$(ROMC): $(ROM) $(ELF) $(BUILD_DIR)/compress_ranges.txt
-	$(PYTHON) tools/compress.py --in $(ROM) --out $@ --dmadata-start `./tools/dmadata_start.sh $(NM) $(ELF)` --compress `cat $(BUILD_DIR)/compress_ranges.txt` --threads $(N_THREADS)
+$(OOT_ROMC): $(OOT_ROM) $(OOT_ELF) $(BUILD_DIR)/compress_ranges.txt
+	$(PYTHON) tools/compress.py --in $(OOT_ROM) --out $@ --dmadata-start `./tools/dmadata_start.sh $(NM) $(OOT_ELF)` --compress `cat $(BUILD_DIR)/compress_ranges.txt` --threads $(N_THREADS)
 	$(PYTHON) -m ipl3checksum sum --cic 6105 --update $@
 
-$(ELF): $(TEXTURE_FILES_OUT) $(ASSET_FILES_OUT) $(O_FILES) $(OVL_RELOC_FILES) $(LDSCRIPT) $(BUILD_DIR)/undefined_syms.txt \
+$(OOT_ELF): $(TEXTURE_FILES_OUT) $(ASSET_FILES_OUT) $(O_FILES) $(OVL_RELOC_FILES) $(LDSCRIPT) $(BUILD_DIR)/undefined_syms.txt \
         $(SAMPLEBANK_O_FILES) $(SOUNDFONT_O_FILES) $(SEQUENCE_O_FILES) \
         $(BUILD_DIR)/assets/audio/sequence_font_table.o $(BUILD_DIR)/assets/audio/audiobank_padding.o
 	$(LD) -T $(LDSCRIPT) -T $(BUILD_DIR)/undefined_syms.txt --no-check-sections --accept-unknown-input-arch --emit-relocs -Map $(MAP) -o $@
