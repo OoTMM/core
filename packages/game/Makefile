@@ -500,10 +500,10 @@ $(OOT_ROMC): $(OOT_ROM) $(OOT_ELF) $(BUILD_DIR)/compress_ranges.txt
 	$(PYTHON) tools/compress.py --in $(OOT_ROM) --out $@ --dmadata-start `./tools/dmadata_start.sh $(NM) $(OOT_ELF)` --compress `cat $(BUILD_DIR)/compress_ranges.txt` --threads $(N_THREADS)
 	$(PYTHON) -m ipl3checksum sum --cic 6105 --update $@
 
-$(OOT_ELF): $(TEXTURE_FILES_OUT) $(ASSET_FILES_OUT) $(O_FILES) $(OVL_RELOC_FILES) $(OOT_LDSCRIPT) $(BUILD_DIR)/undefined_syms.txt \
+$(OOT_ELF): $(TEXTURE_FILES_OUT) $(ASSET_FILES_OUT) $(O_FILES) $(OVL_RELOC_FILES) $(OOT_LDSCRIPT) $(OOT_BUILD_DIR)/undefined_syms.txt \
         $(OOT_SAMPLEBANK_O_FILES) $(OOT_SOUNDFONT_O_FILES) $(OOT_SEQUENCE_O_FILES) \
         $(BUILD_DIR)/assets/audio/sequence_font_table.o $(BUILD_DIR)/assets/audio/audiobank_padding.o
-	$(LD) -T $(OOT_LDSCRIPT) -T $(BUILD_DIR)/undefined_syms.txt --no-check-sections --accept-unknown-input-arch --emit-relocs -Map $(OOT_MAP) -o $@
+	$(LD) -T $(OOT_LDSCRIPT) -T $(OOT_BUILD_DIR)/undefined_syms.txt --no-check-sections --accept-unknown-input-arch --emit-relocs -Map $(OOT_MAP) -o $@
 
 ## Order-only prerequisites
 # These ensure e.g. the O_FILES are built before the OVL_RELOC_FILES.
@@ -525,7 +525,7 @@ $(OOT_LDSCRIPT): $(BUILD_DIR)/$(OOT_SPEC)
 	@mkdir -p $(@D)
 	$(MKLDSCRIPT) $< $@
 
-$(BUILD_DIR)/undefined_syms.txt: undefined_syms.txt
+$(OOT_BUILD_DIR)/undefined_syms.txt: libs/oot/undefined_syms.txt
 	@mkdir -p $(@D)
 	$(CPP) $(CPPFLAGS) $< > $@
 
