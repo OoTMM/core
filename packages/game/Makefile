@@ -21,7 +21,7 @@ NON_MATCHING := 1
 ORIG_COMPILER := 0
 # If COMPILER is "gcc", compile with GCC instead of IDO.
 COMPILER := gcc
-# Target game version. Ensure the corresponding input ROM is placed in baseroms/$(VERSION)/baserom.z64.
+# Target game version. Ensure the corresponding input ROM is placed in baseroms/$(OOT_VERSION)/baserom.z64.
 # Currently the following versions are supported:
 #   ntsc-1.0       N64 NTSC 1.0 (Japan/US depending on REGION)
 #   ntsc-1.1       N64 NTSC 1.1 (Japan/US depending on REGION)
@@ -36,7 +36,7 @@ COMPILER := gcc
 #   gc-eu          GameCube Europe/PAL
 #   gc-eu-mq       GameCube Europe/PAL Master Quest
 #   gc-jp-ce       GameCube Japan (Collector's Edition disc)
-VERSION := ntsc-1.0
+OOT_VERSION := ntsc-1.0
 # Number of threads to extract and compress with.
 N_THREADS ?= $(shell nproc)
 # Check code syntax with host compiler.
@@ -46,6 +46,12 @@ RUN_CC_CHECK ?= 1
 MIPS_BINUTILS_PREFIX ?= mips-linux-gnu-
 # Emulator w/ flags for 'make run'.
 N64_EMULATOR ?=
+
+REGION            := US
+PLATFORM          := N64
+DEBUG_FEATURES    := 0
+REGIONAL_CHECKSUM := 0
+
 # Set to override game region in the ROM header (options: JP, US, EU). This can be used to build a fake US version
 # of the debug ROM for better emulator compatibility, or to build US versions of NTSC N64 ROMs.
 # REGION ?= US
@@ -58,67 +64,6 @@ N64_EMULATOR ?=
 CFLAGS ?=
 CPPFLAGS ?=
 CPP_DEFINES ?=
-
-# Version-specific settings
-REGIONAL_CHECKSUM := 0
-ifeq ($(VERSION),ntsc-1.0)
-  REGIONAL_CHECKSUM := 1
-  REGION ?= JP
-  PLATFORM := N64
-  DEBUG_FEATURES ?= 0
-else ifeq ($(VERSION),ntsc-1.1)
-  REGIONAL_CHECKSUM := 1
-  REGION ?= JP
-  PLATFORM := N64
-  DEBUG_FEATURES ?= 0
-else ifeq ($(VERSION),pal-1.0)
-  REGION ?= EU
-  PLATFORM := N64
-  DEBUG_FEATURES ?= 0
-else ifeq ($(VERSION),ntsc-1.2)
-  REGIONAL_CHECKSUM := 1
-  REGION ?= JP
-  PLATFORM := N64
-  DEBUG_FEATURES ?= 0
-else ifeq ($(VERSION),pal-1.1)
-  REGION ?= EU
-  PLATFORM := N64
-  DEBUG_FEATURES ?= 0
-else ifeq ($(VERSION),gc-jp)
-  REGION ?= JP
-  PLATFORM := GC
-  DEBUG_FEATURES ?= 0
-else ifeq ($(VERSION),gc-jp-mq)
-  REGION ?= JP
-  PLATFORM := GC
-  DEBUG_FEATURES ?= 0
-else ifeq ($(VERSION),gc-us)
-  REGION ?= US
-  PLATFORM := GC
-  DEBUG_FEATURES ?= 0
-else ifeq ($(VERSION),gc-us-mq)
-  REGION ?= US
-  PLATFORM := GC
-  DEBUG_FEATURES ?= 0
-else ifeq ($(VERSION),gc-eu-mq-dbg)
-  REGION ?= EU
-  PLATFORM := GC
-  DEBUG_FEATURES ?= 1
-else ifeq ($(VERSION),gc-eu)
-  REGION ?= EU
-  PLATFORM := GC
-  DEBUG_FEATURES ?= 0
-else ifeq ($(VERSION),gc-eu-mq)
-  REGION ?= EU
-  PLATFORM := GC
-  DEBUG_FEATURES ?= 0
-else ifeq ($(VERSION),gc-jp-ce)
-  REGION ?= JP
-  PLATFORM := GC
-  DEBUG_FEATURES ?= 0
-else
-$(error Unsupported version $(VERSION))
-endif
 
 # ORIG_COMPILER cannot be combined with a non-IDO compiler. Check for this case and error out if found.
 ifneq ($(COMPILER),ido)
@@ -138,17 +83,17 @@ ifeq ($(NON_MATCHING),1)
 endif
 
 PROJECT_DIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
-BUILD_DIR := build/$(VERSION)
+BUILD_DIR := build/$(OOT_VERSION)
 EXPECTED_DIR := expected/$(BUILD_DIR)
-BASEROM_DIR := baseroms/$(VERSION)
-EXTRACTED_DIR := extracted/$(VERSION)
+BASEROM_DIR := baseroms/$(OOT_VERSION)
+EXTRACTED_DIR := extracted/$(OOT_VERSION)
 VENV := .venv
 
 MAKE = make
 CPPFLAGS += -P -xc -fno-dollars-in-identifiers
 
 # Converts e.g. ntsc-1.0 to NTSC_1_0
-VERSION_MACRO := $(shell echo $(VERSION) | tr a-z-. A-Z__)
+VERSION_MACRO := $(shell echo $(OOT_VERSION) | tr a-z-. A-Z__)
 CPP_DEFINES += -DOOT_VERSION=$(VERSION_MACRO)
 CPP_DEFINES += -DOOT_REGION=REGION_$(REGION)
 
@@ -297,7 +242,7 @@ OBJDUMP_FLAGS := -d -r -z -Mreg-names=32
 #### Files ####
 
 # ROM image
-ROM      := $(BUILD_DIR)/oot-$(VERSION).z64
+ROM      := $(BUILD_DIR)/oot-$(OOT_VERSION).z64
 ROMC     := $(ROM:.z64=-compressed.z64)
 ELF      := $(ROM:.z64=.elf)
 MAP      := $(ROM:.z64=.map)
@@ -540,7 +485,7 @@ $(BUILD_DIR)/assets/misc/z_select_static/%.o: GBI_DEFINES := -DF3DEX_GBI
 
 ifeq ($(PERMUTER),)  # permuter + preprocess.py misbehaves, permuter doesn't care about rodata diffs or bss ordering so just don't use it in that case
 # Handle encoding (UTF-8 -> EUC-JP) and custom pragmas
-$(BUILD_DIR)/src/oot/%.o: CC := ./tools/preprocess.sh -v $(VERSION) -- $(CC)
+$(BUILD_DIR)/src/oot/%.o: CC := ./tools/preprocess.sh -v $(OOT_VERSION) -- $(CC)
 endif
 
 else
@@ -595,16 +540,16 @@ venv:
 
 setup: venv
 	$(MAKE) -C tools
-	$(PYTHON) tools/decompress_baserom.py $(VERSION)
-	$(PYTHON) tools/extract_baserom.py $(BASEROM_DIR)/baserom-decompressed.z64 $(EXTRACTED_DIR)/baserom -v $(VERSION)
-	$(PYTHON) tools/extract_incbins.py $(EXTRACTED_DIR)/baserom $(EXTRACTED_DIR)/incbin -v $(VERSION)
-	$(PYTHON) tools/extract_text.py $(EXTRACTED_DIR)/baserom $(EXTRACTED_DIR)/text -v $(VERSION)
-	$(PYTHON) tools/extract_assets.py $(EXTRACTED_DIR)/baserom $(EXTRACTED_DIR)/assets -v $(VERSION) -j$(N_THREADS)
-	$(PYTHON) tools/extract_audio.py -o $(EXTRACTED_DIR) -v $(VERSION) --read-xml
+	$(PYTHON) tools/decompress_baserom.py $(OOT_VERSION)
+	$(PYTHON) tools/extract_baserom.py $(BASEROM_DIR)/baserom-decompressed.z64 $(EXTRACTED_DIR)/baserom -v $(OOT_VERSION)
+	$(PYTHON) tools/extract_incbins.py $(EXTRACTED_DIR)/baserom $(EXTRACTED_DIR)/incbin -v $(OOT_VERSION)
+	$(PYTHON) tools/extract_text.py $(EXTRACTED_DIR)/baserom $(EXTRACTED_DIR)/text -v $(OOT_VERSION)
+	$(PYTHON) tools/extract_assets.py $(EXTRACTED_DIR)/baserom $(EXTRACTED_DIR)/assets -v $(OOT_VERSION) -j$(N_THREADS)
+	$(PYTHON) tools/extract_audio.py -o $(EXTRACTED_DIR) -v $(OOT_VERSION) --read-xml
 
 disasm:
 	$(RM) -r $(EXPECTED_DIR)
-	VERSION=$(VERSION) DISASM_BASEROM=$(BASEROM_DIR)/baserom-decompressed.z64 DISASM_DIR=$(EXPECTED_DIR) PYTHON=$(PYTHON) AS_CMD='$(AS) $(ASFLAGS)' LD=$(LD) ./tools/disasm/do_disasm.sh
+	VERSION=$(OOT_VERSION) DISASM_BASEROM=$(BASEROM_DIR)/baserom-decompressed.z64 DISASM_DIR=$(EXPECTED_DIR) PYTHON=$(PYTHON) AS_CMD='$(AS) $(ASFLAGS)' LD=$(LD) ./tools/disasm/do_disasm.sh
 
 run: $(ROM)
 ifeq ($(N64_EMULATOR),)
