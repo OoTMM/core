@@ -83,7 +83,7 @@ ifeq ($(NON_MATCHING),1)
 endif
 
 PROJECT_DIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
-BUILD_DIR := build/$(OOT_VERSION)
+BUILD_DIR := build
 EXPECTED_DIR := expected/$(BUILD_DIR)
 BASEROM_DIR := baseroms/$(OOT_VERSION)
 EXTRACTED_DIR := extracted/$(OOT_VERSION)
@@ -93,8 +93,8 @@ MAKE = make
 CPPFLAGS += -P -xc -fno-dollars-in-identifiers
 
 # Converts e.g. ntsc-1.0 to NTSC_1_0
-VERSION_MACRO := $(shell echo $(OOT_VERSION) | tr a-z-. A-Z__)
-CPP_DEFINES += -DOOT_VERSION=$(VERSION_MACRO)
+OOT_VERSION_MACRO := $(shell echo $(OOT_VERSION) | tr a-z-. A-Z__)
+CPP_DEFINES += -DOOT_VERSION=$(OOT_VERSION_MACRO)
 CPP_DEFINES += -DOOT_REGION=REGION_$(REGION)
 
 ifeq ($(PLATFORM),N64)
