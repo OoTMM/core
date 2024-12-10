@@ -84,9 +84,9 @@ endif
 
 PROJECT_DIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 BUILD_DIR := build
-EXPECTED_DIR := expected/$(BUILD_DIR)
-BASEROM_DIR := baseroms/$(OOT_VERSION)
-EXTRACTED_DIR := extracted/$(OOT_VERSION)
+OOT_EXPECTED_DIR := expected/$(BUILD_DIR)
+OOT_BASEROM_DIR := baseroms/$(OOT_VERSION)
+OOT_EXTRACTED_DIR := extracted/$(OOT_VERSION)
 VENV := .venv
 
 MAKE = make
@@ -159,7 +159,7 @@ OBJCOPY := $(MIPS_BINUTILS_PREFIX)objcopy
 OBJDUMP := $(MIPS_BINUTILS_PREFIX)objdump
 NM      := $(MIPS_BINUTILS_PREFIX)nm
 
-INC := -Iinclude -Iinclude/libc -Isrc -I$(BUILD_DIR) -I. -I$(EXTRACTED_DIR)
+INC := -Iinclude -Iinclude/libc -Isrc -I$(BUILD_DIR) -I. -I$(OOT_EXTRACTED_DIR)
 
 # Check code syntax with host compiler
 CHECK_WARNINGS := -Wall -Wextra -Wno-format-security -Wno-unknown-pragmas -Wno-unused-parameter -Wno-unused-variable -Wno-missing-braces
@@ -209,7 +209,7 @@ endif
 
 CFLAGS += $(GBI_DEFINES)
 
-ASFLAGS := -march=vr4300 -32 -no-pad-sections -Iinclude -I$(EXTRACTED_DIR)
+ASFLAGS := -march=vr4300 -32 -no-pad-sections -Iinclude -I$(OOT_EXTRACTED_DIR)
 
 ifeq ($(COMPILER),gcc)
   CFLAGS += -G 0 -nostdinc $(INC) -march=vr4300 -mfix4300 -mabi=32 -mno-abicalls -mdivide-breaks -fno-PIC -fno-common -ffreestanding -fbuiltin -fno-builtin-sinf -fno-builtin-cosf $(CHECK_WARNINGS) -funsigned-char
@@ -248,14 +248,14 @@ ELF      := $(ROM:.z64=.elf)
 MAP      := $(ROM:.z64=.map)
 LDSCRIPT := $(ROM:.z64=.ld)
 # description of ROM segments
-SPEC := spec
+OOT_SPEC := spec-oot
 SRC_DIRS := $(shell find src/oot -type d)
 
-ifneq ($(wildcard $(EXTRACTED_DIR)/assets/audio),)
-  SAMPLE_EXTRACT_DIRS := $(shell find $(EXTRACTED_DIR)/assets/audio/samples -type d)
-  SAMPLEBANK_EXTRACT_DIRS := $(shell find $(EXTRACTED_DIR)/assets/audio/samplebanks -type d)
-  SOUNDFONT_EXTRACT_DIRS := $(shell find $(EXTRACTED_DIR)/assets/audio/soundfonts -type d)
-  SEQUENCE_EXTRACT_DIRS := $(shell find $(EXTRACTED_DIR)/assets/audio/sequences -type d)
+ifneq ($(wildcard $(OOT_EXTRACTED_DIR)/assets/audio),)
+  SAMPLE_EXTRACT_DIRS := $(shell find $(OOT_EXTRACTED_DIR)/assets/audio/samples -type d)
+  SAMPLEBANK_EXTRACT_DIRS := $(shell find $(OOT_EXTRACTED_DIR)/assets/audio/samplebanks -type d)
+  SOUNDFONT_EXTRACT_DIRS := $(shell find $(OOT_EXTRACTED_DIR)/assets/audio/soundfonts -type d)
+  SEQUENCE_EXTRACT_DIRS := $(shell find $(OOT_EXTRACTED_DIR)/assets/audio/sequences -type d)
 else
   SAMPLE_EXTRACT_DIRS :=
   SAMPLEBANK_EXTRACT_DIRS :=
@@ -289,33 +289,33 @@ endif
 
 SAMPLE_FILES         := $(foreach dir,$(SAMPLE_DIRS),$(wildcard $(dir)/*.wav))
 SAMPLE_EXTRACT_FILES := $(foreach dir,$(SAMPLE_EXTRACT_DIRS),$(wildcard $(dir)/*.wav))
-AIFC_FILES           := $(foreach f,$(SAMPLE_FILES),$(BUILD_DIR)/$(f:.wav=.aifc)) $(foreach f,$(SAMPLE_EXTRACT_FILES:.wav=.aifc),$(f:$(EXTRACTED_DIR)/%=$(BUILD_DIR)/%))
+AIFC_FILES           := $(foreach f,$(SAMPLE_FILES),$(BUILD_DIR)/$(f:.wav=.aifc)) $(foreach f,$(SAMPLE_EXTRACT_FILES:.wav=.aifc),$(f:$(OOT_EXTRACTED_DIR)/%=$(BUILD_DIR)/%))
 
 SAMPLEBANK_XMLS         := $(foreach dir,$(SAMPLEBANK_DIRS),$(wildcard $(dir)/*.xml))
 SAMPLEBANK_EXTRACT_XMLS := $(foreach dir,$(SAMPLEBANK_EXTRACT_DIRS),$(wildcard $(dir)/*.xml))
-SAMPLEBANK_BUILD_XMLS   := $(foreach f,$(SAMPLEBANK_XMLS),$(BUILD_DIR)/$f) $(foreach f,$(SAMPLEBANK_EXTRACT_XMLS),$(f:$(EXTRACTED_DIR)/%=$(BUILD_DIR)/%))
+SAMPLEBANK_BUILD_XMLS   := $(foreach f,$(SAMPLEBANK_XMLS),$(BUILD_DIR)/$f) $(foreach f,$(SAMPLEBANK_EXTRACT_XMLS),$(f:$(OOT_EXTRACTED_DIR)/%=$(BUILD_DIR)/%))
 SAMPLEBANK_O_FILES      := $(foreach f,$(SAMPLEBANK_BUILD_XMLS),$(f:.xml=.o))
 SAMPLEBANK_DEP_FILES    := $(foreach f,$(SAMPLEBANK_O_FILES),$(f:.o=.d))
 
 SOUNDFONT_XMLS         := $(foreach dir,$(SOUNDFONT_DIRS),$(wildcard $(dir)/*.xml))
 SOUNDFONT_EXTRACT_XMLS := $(foreach dir,$(SOUNDFONT_EXTRACT_DIRS),$(wildcard $(dir)/*.xml))
-SOUNDFONT_BUILD_XMLS   := $(foreach f,$(SOUNDFONT_XMLS),$(BUILD_DIR)/$f) $(foreach f,$(SOUNDFONT_EXTRACT_XMLS),$(f:$(EXTRACTED_DIR)/%=$(BUILD_DIR)/%))
+SOUNDFONT_BUILD_XMLS   := $(foreach f,$(SOUNDFONT_XMLS),$(BUILD_DIR)/$f) $(foreach f,$(SOUNDFONT_EXTRACT_XMLS),$(f:$(OOT_EXTRACTED_DIR)/%=$(BUILD_DIR)/%))
 SOUNDFONT_O_FILES      := $(foreach f,$(SOUNDFONT_BUILD_XMLS),$(f:.xml=.o))
 SOUNDFONT_HEADERS      := $(foreach f,$(SOUNDFONT_BUILD_XMLS),$(f:.xml=.h))
 SOUNDFONT_DEP_FILES    := $(foreach f,$(SOUNDFONT_O_FILES),$(f:.o=.d))
 
 SEQUENCE_FILES         := $(foreach dir,$(SEQUENCE_DIRS),$(wildcard $(dir)/*.seq))
 SEQUENCE_EXTRACT_FILES := $(foreach dir,$(SEQUENCE_EXTRACT_DIRS),$(wildcard $(dir)/*.seq))
-SEQUENCE_O_FILES       := $(foreach f,$(SEQUENCE_FILES),$(BUILD_DIR)/$(f:.seq=.o)) $(foreach f,$(SEQUENCE_EXTRACT_FILES:.seq=.o),$(f:$(EXTRACTED_DIR)/%=$(BUILD_DIR)/%))
+SEQUENCE_O_FILES       := $(foreach f,$(SEQUENCE_FILES),$(BUILD_DIR)/$(f:.seq=.o)) $(foreach f,$(SEQUENCE_EXTRACT_FILES:.seq=.o),$(f:$(OOT_EXTRACTED_DIR)/%=$(BUILD_DIR)/%))
 SEQUENCE_DEP_FILES     := $(foreach f,$(SEQUENCE_O_FILES),$(f:.o=.d))
 
 SEQUENCE_TABLE := include/tables/sequence_table.h
 
 # create extracted directory
-$(shell mkdir -p $(EXTRACTED_DIR))
+$(shell mkdir -p $(OOT_EXTRACTED_DIR))
 
-ifneq ($(wildcard $(EXTRACTED_DIR)/assets),)
-  ASSET_BIN_DIRS_EXTRACTED := $(shell find $(EXTRACTED_DIR)/assets -type d)
+ifneq ($(wildcard $(OOT_EXTRACTED_DIR)/assets),)
+  ASSET_BIN_DIRS_EXTRACTED := $(shell find $(OOT_EXTRACTED_DIR)/assets -type d)
 else
   ASSET_BIN_DIRS_EXTRACTED :=
 endif
@@ -324,13 +324,13 @@ ASSET_BIN_DIRS := $(ASSET_BIN_DIRS_EXTRACTED) $(ASSET_BIN_DIRS_COMMITTED)
 
 ASSET_FILES_BIN_EXTRACTED := $(foreach dir,$(ASSET_BIN_DIRS_EXTRACTED),$(wildcard $(dir)/*.bin))
 ASSET_FILES_BIN_COMMITTED := $(foreach dir,$(ASSET_BIN_DIRS_COMMITTED),$(wildcard $(dir)/*.bin))
-ASSET_FILES_OUT := $(foreach f,$(ASSET_FILES_BIN_EXTRACTED:.bin=.bin.inc.c),$(f:$(EXTRACTED_DIR)/%=$(BUILD_DIR)/%)) \
+ASSET_FILES_OUT := $(foreach f,$(ASSET_FILES_BIN_EXTRACTED:.bin=.bin.inc.c),$(f:$(OOT_EXTRACTED_DIR)/%=$(BUILD_DIR)/%)) \
                    $(foreach f,$(ASSET_FILES_BIN_COMMITTED:.bin=.bin.inc.c),$(BUILD_DIR)/$f) \
                    $(foreach f,$(wildcard assets/text/*.c),$(BUILD_DIR)/$(f:.c=.o))
 
 UNDECOMPILED_DATA_DIRS := $(shell find data -type d)
 
-BASEROM_BIN_FILES := $(wildcard $(EXTRACTED_DIR)/baserom/*)
+BASEROM_BIN_FILES := $(wildcard $(OOT_EXTRACTED_DIR)/baserom/*)
 
 # source files
 ASSET_C_FILES_EXTRACTED := $(filter-out %.inc.c,$(foreach dir,$(ASSET_BIN_DIRS_EXTRACTED),$(wildcard $(dir)/*.c)))
@@ -339,12 +339,12 @@ SRC_C_FILES   := $(filter-out %.inc.c,$(foreach dir,$(SRC_DIRS),$(wildcard $(dir
 S_FILES       := $(foreach dir,$(SRC_DIRS) $(UNDECOMPILED_DATA_DIRS),$(wildcard $(dir)/*.s))
 O_FILES       := $(foreach f,$(S_FILES:.s=.o),$(BUILD_DIR)/$f) \
                  $(foreach f,$(SRC_C_FILES:.c=.o),$(BUILD_DIR)/$f) \
-                 $(foreach f,$(ASSET_C_FILES_EXTRACTED:.c=.o),$(f:$(EXTRACTED_DIR)/%=$(BUILD_DIR)/%)) \
+                 $(foreach f,$(ASSET_C_FILES_EXTRACTED:.c=.o),$(f:$(OOT_EXTRACTED_DIR)/%=$(BUILD_DIR)/%)) \
                  $(foreach f,$(ASSET_C_FILES_COMMITTED:.c=.o),$(BUILD_DIR)/$f) \
                  $(foreach f,$(BASEROM_BIN_FILES),$(BUILD_DIR)/baserom/$(notdir $f).o) \
                  $(BUILD_DIR)/src/oot/code/z_message_z_game_over.o
 
-OVL_RELOC_FILES := $(shell $(CPP) $(CPPFLAGS) $(SPEC) | $(BUILD_DIR_REPLACE) | grep -o '[^"]*_reloc.o' )
+OVL_RELOC_FILES := $(shell $(CPP) $(CPPFLAGS) $(OOT_SPEC) | $(BUILD_DIR_REPLACE) | grep -o '[^"]*_reloc.o' )
 
 # Automatic dependency files
 # (Only asm_processor dependencies and reloc dependencies are handled for now)
@@ -355,9 +355,9 @@ TEXTURE_FILES_PNG_EXTRACTED := $(foreach dir,$(ASSET_BIN_DIRS_EXTRACTED),$(wildc
 TEXTURE_FILES_PNG_COMMITTED := $(foreach dir,$(ASSET_BIN_DIRS_COMMITTED),$(wildcard $(dir)/*.png))
 TEXTURE_FILES_JPG_EXTRACTED := $(foreach dir,$(ASSET_BIN_DIRS_EXTRACTED),$(wildcard $(dir)/*.jpg))
 TEXTURE_FILES_JPG_COMMITTED := $(foreach dir,$(ASSET_BIN_DIRS_COMMITTED),$(wildcard $(dir)/*.jpg))
-TEXTURE_FILES_OUT := $(foreach f,$(TEXTURE_FILES_PNG_EXTRACTED:.png=.inc.c),$(f:$(EXTRACTED_DIR)/%=$(BUILD_DIR)/%)) \
+TEXTURE_FILES_OUT := $(foreach f,$(TEXTURE_FILES_PNG_EXTRACTED:.png=.inc.c),$(f:$(OOT_EXTRACTED_DIR)/%=$(BUILD_DIR)/%)) \
                      $(foreach f,$(TEXTURE_FILES_PNG_COMMITTED:.png=.inc.c),$(BUILD_DIR)/$f) \
-                     $(foreach f,$(TEXTURE_FILES_JPG_EXTRACTED:.jpg=.jpg.inc.c),$(f:$(EXTRACTED_DIR)/%=$(BUILD_DIR)/%)) \
+                     $(foreach f,$(TEXTURE_FILES_JPG_EXTRACTED:.jpg=.jpg.inc.c),$(f:$(OOT_EXTRACTED_DIR)/%=$(BUILD_DIR)/%)) \
                      $(foreach f,$(TEXTURE_FILES_JPG_COMMITTED:.jpg=.jpg.inc.c),$(BUILD_DIR)/$f)
 
 # create build directories
@@ -372,14 +372,14 @@ $(shell mkdir -p $(foreach dir, \
                       $(SEQUENCE_DIRS) \
                       $(ASSET_BIN_DIRS_COMMITTED), \
                     $(BUILD_DIR)/$(dir)))
-ifneq ($(wildcard $(EXTRACTED_DIR)/assets),)
+ifneq ($(wildcard $(OOT_EXTRACTED_DIR)/assets),)
 $(shell mkdir -p $(foreach dir, \
                       $(SAMPLE_EXTRACT_DIRS) \
                       $(SAMPLEBANK_EXTRACT_DIRS) \
                       $(SOUNDFONT_EXTRACT_DIRS) \
                       $(SEQUENCE_EXTRACT_DIRS) \
                       $(ASSET_BIN_DIRS_EXTRACTED), \
-                    $(dir:$(EXTRACTED_DIR)/%=$(BUILD_DIR)/%)))
+                    $(dir:$(OOT_EXTRACTED_DIR)/%=$(BUILD_DIR)/%)))
 endif
 
 ifeq ($(COMPILER),ido)
@@ -504,9 +504,9 @@ rom: $(ROM)
 ifneq ($(COMPARE),0)
 	@md5sum $(ROM)
  ifneq ($(REGIONAL_CHECKSUM),0)
-	@md5sum -c $(BASEROM_DIR)/checksum-$(REGION).md5
+	@md5sum -c $(OOT_BASEROM_DIR)/checksum-$(REGION).md5
  else
-	@md5sum -c $(BASEROM_DIR)/checksum.md5
+	@md5sum -c $(OOT_BASEROM_DIR)/checksum.md5
  endif
 endif
 
@@ -514,21 +514,19 @@ compress: $(ROMC)
 ifneq ($(COMPARE),0)
 	@md5sum $(ROMC)
  ifneq ($(REGIONAL_CHECKSUM),0)
-	@md5sum -c $(BASEROM_DIR)/checksum-$(REGION)-compressed.md5
+	@md5sum -c $(OOT_BASEROM_DIR)/checksum-$(REGION)-compressed.md5
  else
-	@md5sum -c $(BASEROM_DIR)/checksum-compressed.md5
+	@md5sum -c $(OOT_BASEROM_DIR)/checksum-compressed.md5
  endif
 endif
 
 clean:
-	$(RM) -r $(BUILD_DIR)
+	$(RM) -r build/
 
 assetclean:
-	$(RM) -r $(EXTRACTED_DIR)
-
-distclean:
 	$(RM) -r extracted/
-	$(RM) -r build/
+
+distclean: clean assetclean
 	$(MAKE) -C tools distclean
 
 venv:
@@ -541,15 +539,15 @@ venv:
 setup: venv
 	$(MAKE) -C tools
 	$(PYTHON) tools/decompress_baserom.py $(OOT_VERSION)
-	$(PYTHON) tools/extract_baserom.py $(BASEROM_DIR)/baserom-decompressed.z64 $(EXTRACTED_DIR)/baserom -v $(OOT_VERSION)
-	$(PYTHON) tools/extract_incbins.py $(EXTRACTED_DIR)/baserom $(EXTRACTED_DIR)/incbin -v $(OOT_VERSION)
-	$(PYTHON) tools/extract_text.py $(EXTRACTED_DIR)/baserom $(EXTRACTED_DIR)/text -v $(OOT_VERSION)
-	$(PYTHON) tools/extract_assets.py $(EXTRACTED_DIR)/baserom $(EXTRACTED_DIR)/assets -v $(OOT_VERSION) -j$(N_THREADS)
-	$(PYTHON) tools/extract_audio.py -o $(EXTRACTED_DIR) -v $(OOT_VERSION) --read-xml
+	$(PYTHON) tools/extract_baserom.py $(OOT_BASEROM_DIR)/baserom-decompressed.z64 $(OOT_EXTRACTED_DIR)/baserom -v $(OOT_VERSION)
+	$(PYTHON) tools/extract_incbins.py $(OOT_EXTRACTED_DIR)/baserom $(OOT_EXTRACTED_DIR)/incbin -v $(OOT_VERSION)
+	$(PYTHON) tools/extract_text.py $(OOT_EXTRACTED_DIR)/baserom $(OOT_EXTRACTED_DIR)/text -v $(OOT_VERSION)
+	$(PYTHON) tools/extract_assets.py $(OOT_EXTRACTED_DIR)/baserom $(OOT_EXTRACTED_DIR)/assets -v $(OOT_VERSION) -j$(N_THREADS)
+	$(PYTHON) tools/extract_audio.py -o $(OOT_EXTRACTED_DIR) -v $(OOT_VERSION) --read-xml
 
 disasm:
-	$(RM) -r $(EXPECTED_DIR)
-	VERSION=$(OOT_VERSION) DISASM_BASEROM=$(BASEROM_DIR)/baserom-decompressed.z64 DISASM_DIR=$(EXPECTED_DIR) PYTHON=$(PYTHON) AS_CMD='$(AS) $(ASFLAGS)' LD=$(LD) ./tools/disasm/do_disasm.sh
+	$(RM) -r $(OOT_EXPECTED_DIR)
+	VERSION=$(OOT_VERSION) DISASM_BASEROM=$(OOT_BASEROM_DIR)/baserom-decompressed.z64 DISASM_DIR=$(OOT_EXPECTED_DIR) PYTHON=$(PYTHON) AS_CMD='$(AS) $(ASFLAGS)' LD=$(LD) ./tools/disasm/do_disasm.sh
 
 run: $(ROM)
 ifeq ($(N64_EMULATOR),)
@@ -587,26 +585,26 @@ $(O_FILES): | asset_files
 
 .PHONY: o_files asset_files
 
-$(BUILD_DIR)/$(SPEC): $(SPEC)
+$(BUILD_DIR)/$(OOT_SPEC): $(OOT_SPEC)
 	$(CPP) $(CPPFLAGS) $< | $(BUILD_DIR_REPLACE) > $@
 
-$(LDSCRIPT): $(BUILD_DIR)/$(SPEC)
+$(LDSCRIPT): $(BUILD_DIR)/$(OOT_SPEC)
 	$(MKLDSCRIPT) $< $@
 
 $(BUILD_DIR)/undefined_syms.txt: undefined_syms.txt
 	$(CPP) $(CPPFLAGS) $< > $@
 
-$(BUILD_DIR)/baserom/%.o: $(EXTRACTED_DIR)/baserom/%
+$(BUILD_DIR)/baserom/%.o: $(OOT_EXTRACTED_DIR)/baserom/%
 	$(OBJCOPY) -I binary -O elf32-big $< $@
 
 $(BUILD_DIR)/data/%.o: data/%.s
 	$(CPP) $(CPPFLAGS) -Iinclude $< | $(AS) $(ASFLAGS) -o $@
 
-$(BUILD_DIR)/assets/text/%.enc.jpn.h: assets/text/%.h $(EXTRACTED_DIR)/text/%.h assets/text/charmap.txt
-	$(CPP) $(CPPFLAGS) -I$(EXTRACTED_DIR) $< | $(PYTHON) tools/msgenc.py --encoding jpn --charmap assets/text/charmap.txt - $@
+$(BUILD_DIR)/assets/text/%.enc.jpn.h: assets/text/%.h $(OOT_EXTRACTED_DIR)/text/%.h assets/text/charmap.txt
+	$(CPP) $(CPPFLAGS) -I$(OOT_EXTRACTED_DIR) $< | $(PYTHON) tools/msgenc.py --encoding jpn --charmap assets/text/charmap.txt - $@
 
-$(BUILD_DIR)/assets/text/%.enc.nes.h: assets/text/%.h $(EXTRACTED_DIR)/text/%.h assets/text/charmap.txt
-	$(CPP) $(CPPFLAGS) -I$(EXTRACTED_DIR) $< | $(PYTHON) tools/msgenc.py --encoding nes --charmap assets/text/charmap.txt - $@
+$(BUILD_DIR)/assets/text/%.enc.nes.h: assets/text/%.h $(OOT_EXTRACTED_DIR)/text/%.h assets/text/charmap.txt
+	$(CPP) $(CPPFLAGS) -I$(OOT_EXTRACTED_DIR) $< | $(PYTHON) tools/msgenc.py --encoding nes --charmap assets/text/charmap.txt - $@
 
 # Dependencies for files including message data headers
 # TODO remove when full header dependencies are used.
@@ -631,7 +629,7 @@ $(BUILD_DIR)/assets/%.o: assets/%.c
 	$(CC) -c $(CFLAGS) $(MIPS_VERSION) $(OPTFLAGS) -o $@ $<
 	$(OBJCOPY) -O binary $@ $@.bin
 
-$(BUILD_DIR)/assets/%.o: $(EXTRACTED_DIR)/assets/%.c
+$(BUILD_DIR)/assets/%.o: $(OOT_EXTRACTED_DIR)/assets/%.c
 	$(CC) -c $(CFLAGS) $(MIPS_VERSION) $(OPTFLAGS) -o $@ $<
 	$(OBJCOPY) -O binary $@ $@.bin
 
@@ -642,7 +640,7 @@ $(BUILD_DIR)/src/oot/%.o: src/oot/%.s
 $(BUILD_DIR)/src/oot/code/z_message_z_game_over.o: $(BUILD_DIR)/src/oot/code/z_message.o $(BUILD_DIR)/src/oot/code/z_game_over.o
 	$(LD) -r -T linker_scripts/data_with_rodata.ld -o $@ $^
 
-$(BUILD_DIR)/dmadata_table_spec.h $(BUILD_DIR)/compress_ranges.txt: $(BUILD_DIR)/$(SPEC)
+$(BUILD_DIR)/dmadata_table_spec.h $(BUILD_DIR)/compress_ranges.txt: $(BUILD_DIR)/$(OOT_SPEC)
 	$(MKDMADATA) $< $(BUILD_DIR)/dmadata_table_spec.h $(BUILD_DIR)/compress_ranges.txt
 
 # Dependencies for files that may include the dmadata header automatically generated from the spec file
@@ -684,26 +682,26 @@ endif
 	$(PYTHON) tools/set_o32abi_bit.py $@
 	@$(OBJDUMP) $(OBJDUMP_FLAGS) $@ > $(@:.o=.s)
 
-$(BUILD_DIR)/src/oot/overlays/%_reloc.o: $(BUILD_DIR)/$(SPEC)
+$(BUILD_DIR)/src/oot/overlays/%_reloc.o: $(BUILD_DIR)/$(OOT_SPEC)
 	$(FADO) $$(tools/reloc_prereq $< $(notdir $*)) -n $(notdir $*) -o $(@:.o=.s) -M $(@:.o=.d)
 	$(AS) $(ASFLAGS) $(@:.o=.s) -o $@
 
 $(BUILD_DIR)/assets/%.inc.c: assets/%.png
 	$(ZAPD) btex -eh -tt $(subst .,,$(suffix $*)) -i $< -o $@
 
-$(BUILD_DIR)/assets/%.inc.c: $(EXTRACTED_DIR)/assets/%.png
+$(BUILD_DIR)/assets/%.inc.c: $(OOT_EXTRACTED_DIR)/assets/%.png
 	$(ZAPD) btex -eh -tt $(subst .,,$(suffix $*)) -i $< -o $@
 
 $(BUILD_DIR)/assets/%.bin.inc.c: assets/%.bin
 	$(ZAPD) bblb -eh -i $< -o $@
 
-$(BUILD_DIR)/assets/%.bin.inc.c: $(EXTRACTED_DIR)/assets/%.bin
+$(BUILD_DIR)/assets/%.bin.inc.c: $(OOT_EXTRACTED_DIR)/assets/%.bin
 	$(ZAPD) bblb -eh -i $< -o $@
 
 $(BUILD_DIR)/assets/%.jpg.inc.c: assets/%.jpg
 	$(ZAPD) bren -eh -i $< -o $@
 
-$(BUILD_DIR)/assets/%.jpg.inc.c: $(EXTRACTED_DIR)/assets/%.jpg
+$(BUILD_DIR)/assets/%.jpg.inc.c: $(OOT_EXTRACTED_DIR)/assets/%.jpg
 	$(ZAPD) bren -eh -i $< -o $@
 
 # Audio
@@ -722,7 +720,7 @@ endif
 $(BUILD_DIR)/assets/audio/samples/%.half.aifc: assets/audio/samples/%.half.wav
 	$(SAMPLECONV) vadpcm-half $< $@
 
-$(BUILD_DIR)/assets/audio/samples/%.half.aifc: $(EXTRACTED_DIR)/assets/audio/samples/%.half.wav
+$(BUILD_DIR)/assets/audio/samples/%.half.aifc: $(OOT_EXTRACTED_DIR)/assets/audio/samples/%.half.wav
 	$(SAMPLECONV) vadpcm-half $< $@
 ifeq ($(AUDIO_BUILD_DEBUG),1)
 	@(cmp $(<D)/aifc/$(<F:.half.wav=.half.aifc) $@ && echo "$(<F) OK") || (mkdir -p NONMATCHINGS/$(<D) && cp $(<D)/aifc/$(<F:.half.wav=.half.aifc) NONMATCHINGS/$(<D)/$(<F:.half.wav=.half.aifc))
@@ -731,7 +729,7 @@ endif
 $(BUILD_DIR)/assets/audio/samples/%.aifc: assets/audio/samples/%.wav
 	$(SAMPLECONV) vadpcm $< $@
 
-$(BUILD_DIR)/assets/audio/samples/%.aifc: $(EXTRACTED_DIR)/assets/audio/samples/%.wav
+$(BUILD_DIR)/assets/audio/samples/%.aifc: $(OOT_EXTRACTED_DIR)/assets/audio/samples/%.wav
 	$(SAMPLECONV) vadpcm $< $@
 ifeq ($(AUDIO_BUILD_DEBUG),1)
 	@(cmp $(<D)/aifc/$(<F:.wav=.aifc) $@ && echo "$(<F) OK") || (mkdir -p NONMATCHINGS/$(<D) && cp $(<D)/aifc/$(<F:.wav=.aifc) NONMATCHINGS/$(<D)/$(<F:.wav=.aifc))
@@ -744,7 +742,7 @@ endif
 $(BUILD_DIR)/assets/audio/samplebanks/%.xml: assets/audio/samplebanks/%.xml
 	cat $< | $(BUILD_DIR_REPLACE) > $@
 
-$(BUILD_DIR)/assets/audio/samplebanks/%.xml: $(EXTRACTED_DIR)/assets/audio/samplebanks/%.xml
+$(BUILD_DIR)/assets/audio/samplebanks/%.xml: $(OOT_EXTRACTED_DIR)/assets/audio/samplebanks/%.xml
 	cat $< | $(BUILD_DIR_REPLACE) > $@
 
 .PRECIOUS: $(BUILD_DIR)/assets/audio/samplebanks/%.s
@@ -757,7 +755,7 @@ $(BUILD_DIR)/assets/audio/samplebanks/%.o: $(BUILD_DIR)/assets/audio/samplebanks
 	$(AS) $(ASFLAGS) $< -o $@
 ifeq ($(AUDIO_BUILD_DEBUG),1)
 	$(OBJCOPY) -O binary --only-section .rodata $@ $(@:.o=.bin)
-	@cmp $(@:.o=.bin) $(patsubst $(BUILD_DIR)/assets/audio/samplebanks/%,$(EXTRACTED_DIR)/baserom_audiotest/audiotable_files/%,$(@:.o=.bin)) && echo "$(<F) OK"
+	@cmp $(@:.o=.bin) $(patsubst $(BUILD_DIR)/assets/audio/samplebanks/%,$(OOT_EXTRACTED_DIR)/baserom_audiotest/audiotable_files/%,$(@:.o=.bin)) && echo "$(<F) OK"
 endif
 
 # also assemble the soundfonts and generate the associated headers...
@@ -765,7 +763,7 @@ endif
 $(BUILD_DIR)/assets/audio/soundfonts/%.xml: assets/audio/soundfonts/%.xml
 	cat $< | $(BUILD_DIR_REPLACE) > $@
 
-$(BUILD_DIR)/assets/audio/soundfonts/%.xml: $(EXTRACTED_DIR)/assets/audio/soundfonts/%.xml
+$(BUILD_DIR)/assets/audio/soundfonts/%.xml: $(OOT_EXTRACTED_DIR)/assets/audio/soundfonts/%.xml
 	cat $< | $(BUILD_DIR_REPLACE) > $@
 
 .PRECIOUS: $(BUILD_DIR)/assets/audio/soundfonts/%.c $(BUILD_DIR)/assets/audio/soundfonts/%.h $(BUILD_DIR)/assets/audio/soundfonts/%.name
@@ -790,7 +788,7 @@ $(BUILD_DIR)/assets/audio/soundfonts/%.o: $(BUILD_DIR)/assets/audio/soundfonts/%
 ifeq ($(AUDIO_BUILD_DEBUG),1)
 	$(LD) $(foreach f,$(SAMPLEBANK_O_FILES),-R $f) -T linker_scripts/soundfont.ld $@ -o $(@:.o=.elf)
 	$(OBJCOPY) -O binary -j.rodata $(@:.o=.elf) $(@:.o=.bin)
-	@(cmp $(@:.o=.bin) $(patsubst $(BUILD_DIR)/assets/audio/soundfonts/%,$(EXTRACTED_DIR)/baserom_audiotest/audiobank_files/%,$(@:.o=.bin)) && echo "$(<F) OK" || (mkdir -p NONMATCHINGS/soundfonts && cp $(@:.o=.bin) NONMATCHINGS/soundfonts/$(@F:.o=.bin)))
+	@(cmp $(@:.o=.bin) $(patsubst $(BUILD_DIR)/assets/audio/soundfonts/%,$(OOT_EXTRACTED_DIR)/baserom_audiotest/audiobank_files/%,$(@:.o=.bin)) && echo "$(<F) OK" || (mkdir -p NONMATCHINGS/soundfonts && cp $(@:.o=.bin) NONMATCHINGS/soundfonts/$(@F:.o=.bin)))
 endif
 
 # then assemble the sequences...
@@ -799,12 +797,12 @@ $(BUILD_DIR)/assets/audio/sequences/%.o: assets/audio/sequences/%.seq include/au
 	$(SEQ_CPP) $(SEQ_CPPFLAGS) $< -o $(@:.o=.s) -MMD -MT $@
 	$(AS) $(ASFLAGS) -I $(BUILD_DIR)/assets/audio/soundfonts -I include/audio -I $(dir $<) $(@:.o=.s) -o $@
 
-$(BUILD_DIR)/assets/audio/sequences/%.o: $(EXTRACTED_DIR)/assets/audio/sequences/%.seq include/audio/aseq.h $(SEQUENCE_TABLE) | $(SOUNDFONT_HEADERS)
+$(BUILD_DIR)/assets/audio/sequences/%.o: $(OOT_EXTRACTED_DIR)/assets/audio/sequences/%.seq include/audio/aseq.h $(SEQUENCE_TABLE) | $(SOUNDFONT_HEADERS)
 	$(SEQ_CPP) $(SEQ_CPPFLAGS) $< -o $(@:.o=.s) -MMD -MT $@
 	$(AS) $(ASFLAGS) -I $(BUILD_DIR)/assets/audio/soundfonts -I include/audio -I $(dir $<) $(@:.o=.s) -o $@
 ifeq ($(AUDIO_BUILD_DEBUG),1)
 	$(OBJCOPY) -O binary -j.data $@ $(@:.o=.aseq)
-	@(cmp $(@:.o=.aseq) $(patsubst $(BUILD_DIR)/assets/audio/sequences/%,$(EXTRACTED_DIR)/baserom_audiotest/audioseq_files/%,$(@:.o=.aseq)) && echo "$(<F) OK" || (mkdir -p NONMATCHINGS/sequences && cp $(@:.o=.aseq) NONMATCHINGS/sequences/$(@F:.o=.aseq)))
+	@(cmp $(@:.o=.aseq) $(patsubst $(BUILD_DIR)/assets/audio/sequences/%,$(OOT_EXTRACTED_DIR)/baserom_audiotest/audioseq_files/%,$(@:.o=.aseq)) && echo "$(<F) OK" || (mkdir -p NONMATCHINGS/sequences && cp $(@:.o=.aseq) NONMATCHINGS/sequences/$(@F:.o=.aseq)))
 endif
 
 -include $(SEQUENCE_DEP_FILES)
