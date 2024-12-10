@@ -227,9 +227,9 @@ endseg
 beginseg
     name "Audioseq"
     address 0
-    include "$(BUILD_DIR)/assets/audio/sequences/seq_0.prg.o"
-    include "$(BUILD_DIR)/assets/audio/sequences/seq_1.prg.o"
-    include "$(BUILD_DIR)/assets/audio/sequences/seq_2.prg.o"
+    include "$(BUILD_DIR)/libs/oot/assets/audio/sequences/seq_0.prg.o"
+    include "$(BUILD_DIR)/libs/oot/assets/audio/sequences/seq_1.prg.o"
+    include "$(BUILD_DIR)/libs/oot/assets/audio/sequences/seq_2.prg.o"
     include "$(BUILD_DIR)/assets/audio/sequences/seq_3.o"
     include "$(BUILD_DIR)/assets/audio/sequences/seq_4.o"
     include "$(BUILD_DIR)/assets/audio/sequences/seq_5.o"
@@ -335,7 +335,7 @@ beginseg
     include "$(BUILD_DIR)/assets/audio/sequences/seq_106.o"
     include "$(BUILD_DIR)/assets/audio/sequences/seq_107.o"
     include "$(BUILD_DIR)/assets/audio/sequences/seq_108.o"
-    include "$(BUILD_DIR)/assets/audio/sequences/seq_109.prg.o"
+    include "$(BUILD_DIR)/libs/oot/assets/audio/sequences/seq_109.prg.o"
 endseg
 
 beginseg
