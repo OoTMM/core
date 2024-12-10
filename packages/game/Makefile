@@ -84,6 +84,7 @@ endif
 
 PROJECT_DIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 BUILD_DIR := build
+OOT_BUILD_DIR := $(BUILD_DIR)/oot
 OOT_EXPECTED_DIR := expected/$(BUILD_DIR)
 OOT_BASEROM_DIR := baseroms/$(OOT_VERSION)
 OOT_EXTRACTED_DIR := extracted/oot
@@ -272,7 +273,7 @@ O_FILES       := $(foreach f,$(S_FILES:libs/%.s=%.o),$(BUILD_DIR)/$f) \
                  $(foreach f,$(SRC_C_FILES:libs/%.c=%.o),$(BUILD_DIR)/$f) \
                  $(foreach f,$(ASSET_C_FILES_EXTRACTED:.c=.o),$(f:$(OOT_EXTRACTED_DIR)/%=$(BUILD_DIR)/%)) \
                  $(foreach f,$(ASSET_C_FILES_COMMITTED:.c=.o),$(BUILD_DIR)/$f) \
-                 $(foreach f,$(BASEROM_BIN_FILES),$(BUILD_DIR)/baserom/$(notdir $f).o) \
+                 $(foreach f,$(BASEROM_BIN_FILES),$(OOT_BUILD_DIR)/baserom/$(notdir $f).o) \
                  $(BUILD_DIR)/oot/src/code/z_message_z_game_over.o
 
 OVL_RELOC_FILES := $(shell $(CPP) $(CPPFLAGS) $(OOT_SPEC) | $(BUILD_DIR_REPLACE) | grep -o '[^"]*_reloc.o' )
@@ -292,7 +293,7 @@ TEXTURE_FILES_OUT := $(foreach f,$(TEXTURE_FILES_PNG_EXTRACTED:.png=.inc.c),$(f:
                      $(foreach f,$(TEXTURE_FILES_JPG_COMMITTED:.jpg=.jpg.inc.c),$(BUILD_DIR)/$f)
 
 # create build directories
-$(shell mkdir -p $(BUILD_DIR)/baserom \
+$(shell mkdir -p $(OOT_BUILD_DIR)/baserom \
                  $(BUILD_DIR)/assets/text)
 $(shell mkdir -p $(foreach dir, \
                       $(OOT_SRC_DIRS) \
@@ -528,7 +529,7 @@ $(BUILD_DIR)/undefined_syms.txt: undefined_syms.txt
 	@mkdir -p $(@D)
 	$(CPP) $(CPPFLAGS) $< > $@
 
-$(BUILD_DIR)/baserom/%.o: $(OOT_EXTRACTED_DIR)/baserom/%
+$(OOT_BUILD_DIR)/baserom/%.o: $(OOT_EXTRACTED_DIR)/baserom/%
 	@mkdir -p $(@D)
 	$(OBJCOPY) -I binary -O elf32-big $< $@
 
@@ -805,10 +806,12 @@ endif
 	@$(RM) $(@:.o=.tmp)
 
 $(BUILD_DIR)/assets/audio/sequence_font_table.o: $(BUILD_DIR)/assets/audio/sequence_font_table.s
+	@mkdir -p $(@D)
 	$(AS) $(ASFLAGS) $< -o $@
 
 # Extra audiobank padding that doesn't belong to any soundfont file
 $(BUILD_DIR)/assets/audio/audiobank_padding.o:
+	@mkdir -p $(@D)
 	echo ".section .rodata; .fill 0x20" | $(AS) $(ASFLAGS) -o $@
 
 -include $(DEP_FILES)
