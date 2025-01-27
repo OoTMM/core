@@ -22,6 +22,10 @@ All notable changes to this project will be documented in this file.
 - Path hints now tell the exact world the path corresponds to in multiworld.
 - Logic can now expect Sunlight Arrows to go through Spirit Temple child climb.
 
+### Changed
+
+- Grass and Pot CAMC is now its own setting and separated from the rest.
+
 ### Fixed
 
 - Fix a vanilla bug where the frozen link effect would sometimes get distorded.
