@@ -24,6 +24,8 @@ All notable changes to this project will be documented in this file.
 - Completely reworked the stray fairy item model to be much closer to the actual fairies.
 - Path hints now tell the exact world the path corresponds to in multiworld.
 - Logic can now expect Sunlight Arrows to go through Spirit Temple child climb.
+- Rework of OoT Fire Temple MQ and Shadow Temple MQ dungeon logic, including implementation of Age Swap, Climb Anywhere, and Hookshot Anywhere features.
+- Add two macros for OoT that are needed for new logic situations given the logic reworks.
 
 ### Fixed
 
@@ -128,6 +130,8 @@ All notable changes to this project will be documented in this file.
 - Pirate Fortress Sewers Exit door now requires the Pirate Fortress Entrances option to be shuffled.
 - Pirate Fortress Sewers Gate and interior passages now require the Pirate Fortress Entrances option to be shuffled.
 - Pirate Fortress will no longer be considered a dungeon if its entrances are shuffled among the overworld.
+- Reworks of most OoT MQ dungeon logic (all except Forest Temple MQ, Fire Temple MQ, Shadow Temple MQ, and Spirit Temple MQ), including implementation of Age Swap, Climb Anywhere, and Hookshot Anywhere features.
+- Rework of OoT Ganon Castle Tower dungeon logic in preparation for future features.
 
 ### Fixed
 
